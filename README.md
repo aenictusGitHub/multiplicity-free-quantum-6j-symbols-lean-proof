@@ -10,7 +10,7 @@ At $N\geq 3$ and real $v>0$, $v\neq 1$, the proof constructs one shared table of
 
 ## Acknowledgements
 
-The question addressed here arose during collaborative work with Eduardo Serrano-Ensástiga, Jonathan Louvet, and Thierry Bastin on *Partial transpose as a Racah transformation and applications to symmetric multiqudit systems*.
+The question addressed here arose during collaborative work with Eduardo Serrano-Ensástiga, Jonathan Louvet, and Thierry Bastin.
 
 ## Downloads
 
