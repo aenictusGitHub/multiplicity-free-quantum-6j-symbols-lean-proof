@@ -1,0 +1,1710 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=23mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,xcolor,booktabs,array}
+\usepackage{tikz-cd,xurl}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={A representation-theoretic proof of the AMS relation},
+ pdfauthor={John Martin},
+ pdfsubject={Lean-certified AMS coefficient proof and one shared actual vertex table for both families}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newcommand{\Sym}{\operatorname{Sym}}
+\newcommand{\Inv}{\operatorname{Inv}}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\qf}[1]{[#1]_v!}
+\newcommand{\qd}[1]{[#1]_v}
+\newcommand{\id}{\mathbf 1}
+\newcommand{\lean}[1]{{\small\nolinkurl{#1}}}
+\newenvironment{revision}{\begingroup}{\endgroup}
+\setlength{\emergencystretch}{1em}
+\newcommand{\brac}[2]{\begin{Bmatrix}#1\\#2\end{Bmatrix}}
+% aiXiv local preparation copy. No submission has been made.
+% Author and declaration metadata confirmed by the user on 25 November 2026.
+\title{A representation-theoretic proof of the AMS relation}
+\author{John Martin}
+\date{25 November 2026\\[0.5em]
+  {\small AI-derived proof and AI-written manuscript under the author's direction.}}
+\begin{document}
+\begin{revision}
+\maketitle
+\begin{abstract}
+We give a representation-theoretic proof that the Alekseev--Morozov--Sleptsov
+factorial formula computes the multiplicity-free quantum $6j$ symbols
+in the two symmetric families.
+For real $v>0$, $v\ne1$, the proof constructs the physical coupling
+spaces, their compact forms, the complete irreducible channels, and
+an explicit comparison with rank-two coupling spaces. In Type II,
+a universal normalization and a full shifted-channel comparison fix
+the exact coefficient formula. For $N\ge3$, we construct one table
+of full isometric intertwiners indexed by actual ordered Dynkin-weight
+triples and shared by both families. Its Type-I trees agree with the
+calibrated trees; both Type-II trees acquire the same exterior sign,
+which cancels in their overlap. The construction includes coincident
+mixed and two-row carriers at $N=3$ and all zero-degree endpoints.
+We also establish the physical coefficient deformation limits at
+$v=1$ and equality of compatible complex analytic continuations.
+The shared vertex table is constructed at real $v>0$, $v\ne1$.
+The finite proof and the coefficient continuation results are certified
+in Lean 4.24.0 with Mathlib v4.24.0.
+\end{abstract}
+\end{revision}
+
+\begin{revision}
+\noindent\textbf{Certified scope and convention.}
+Nawata, Ramadevi and Zodinmawia proposed a factorial formula for
+multiplicity-free quantum $6j$ symbols with symmetric labels~\cite{NRZ}.
+Alekseev, Morozov and Sleptsov (AMS) rewrote it as Eq.~(35) and related it
+to the rank-two factorial evaluation in Eq.~(50)~\cite{AMS}. Here we prove
+that the formula evaluates the actual coupling coefficients of both families
+for all $N\ge2$ and all admissible exterior and channel labels.
+The direct finite proof appears in Section~\ref{sec:certified}. It
+constructs the higher-rank channel vectors independently of the factorial
+formula and the Kazhdan--Lusztig equivalence. Section~\ref{sec:KZroute}
+gives a second proof of rank reduction via the classical determinant
+model and the KZ associator. Section~\ref{sec:phases} fixes the signs,
+including a common vertex table at $N\ge3$, and
+Section~\ref{sec:continuation} states the classical coefficient limit and
+complex continuation. The Lean statements and replay are recorded in
+Section~\ref{sec:audit}.
+\end{revision}
+
+\medskip
+Set $h=N-2$, $N\ge2$, and write $S_r^{(N)}=\Sym^r\mathbb C^N$.
+For $v>0$, $v\ne1$, our quantum integer and factorial are
+\[
+ [k]_v=\frac{v^k-v^{-k}}{v-v^{-1}},\qquad
+ \qf{k}=\prod_{a=1}^k[a]_v\quad(k\ge0).
+\]
+At $v=1$ we use their continuous values $[k]_1=k$ and $[k]_1!=k!$.
+Thus the parameter called $q$ in AMS, with half-powers in its quantum integers,
+is $v^2$. The parameter of $U_v(\mathfrak{sl}_N)$ below is $v$.
+
+\section{Statement for the actual coupling matrices}
+Consider the four exterior representations
+\begin{align}
+\mathrm I:\quad&
+ S_{r_1}^{(N)}\otimes(S_{r_2}^{(N)})^*\otimes
+ S_{r_3}^{(N)}\otimes(S_{r_4}^{(N)})^*,
+ &r_1+r_3&=r_2+r_4,\label{eq:typeI}\\
+\mathrm {II}:\quad&
+ S_{r_1}^{(N)}\otimes S_{r_2}^{(N)}\otimes
+ (S_{r_3}^{(N)})^*\otimes(S_{r_4}^{(N)})^*,
+ &r_1+r_2&=r_3+r_4.\label{eq:typeII}
+\end{align}
+At $v\ne1$ use the corresponding type-1 quantum modules. In each
+family let $V_1,V_2,V_3,V_4$ denote the four factors in the displayed order.
+Identify the singlet space with $\Hom(V_4^*,V_1\otimes V_2\otimes V_3)$
+by duality. Write $L_i$ and $R_j$ for normalized coupling vectors, viewed
+in the same space by the tensor associator. Our overlap matrix has entries
+$\mathsf U_{N,T;ij}(v)=\langle L_i,R_j\rangle$, with rows indexed by the
+$12$ channel and columns by the $23$ channel. The inner product is
+conjugate-linear in its first argument. Thus its adjoint acts on coordinate
+columns from the $12$ basis to the $23$ basis.
+
+The channel labels are
+\begin{align*}
+ i&=\max(|r_1-r_2|,|r_3-r_4|),\ldots,
+       \min(r_1+r_2,r_3+r_4),\\
+ j&=\max(|r_1-r_4|,|r_2-r_3|),\ldots,
+       \min(r_1+r_4,r_2+r_3),
+\end{align*}
+in steps of two. For a mixed pair with symmetric degree $a$ and dual
+symmetric degree $b$, contraction $u$ gives highest weight
+$(a-u)\omega_1+(b-u)\omega_{N-1}$ and numerical label $a+b-2u$.
+For a symmetric pair the label $a+b-2t$ specifies the Young diagram
+$(a+b-t,t)$. A pair of dual symmetric modules gives the dual of that
+representation. At $N=2$ the numerical label in either case is the
+usual highest weight. The Pieri and mixed harmonic decompositions are
+multiplicity-free. Matching dual channels gives a one-dimensional space
+for each admissible channel in the singlet space.
+
+\begin{theorem}[Physical rank reduction]\label{thm:physical}
+For $v>0$ and every admissible set of labels in \eqref{eq:typeI} or
+\eqref{eq:typeII},
+\begin{equation}\label{eq:physical}
+ \mathsf U_{N,T}(v)=D_L(v)\,
+ \mathsf U_{2}(v;\boldsymbol r';i',j')\,D_R(v),
+\end{equation}
+where $D_L,D_R$ are diagonal unitary phase matrices and
+\begin{center}
+\begin{tabular}{c@{\qquad}cccccc}
+\toprule
+$T$ & $r'_1$ & $r'_2$ & $r'_3$ & $r'_4$ & $i'$ & $j'$\\
+\midrule
+I & $r_1$ & $r_2+h$ & $r_3$ & $r_4+h$ & $i+h$ & $j+h$\\
+II & $r_1+h$ & $r_2+h$ & $r_3$ & $r_4$ & $i$ & $j+h$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{revision}
+For $v>0$, $v\ne1$, the direct quantum proof below establishes the theorem
+on complete physical highest spaces. The coefficient limit at $v=1$ and
+all compatible complex analytic continuations are certified separately
+as stated in Section~\ref{sec:continuation}. The retained classical argument
+also establishes the classical representation-theoretic rank reduction.
+Unitarity concerns positive real parameters. For arbitrary real normalized
+coupling bases, the comparison factors at each parameter are whole-row
+and whole-column signs. Exact phase choices are specified in
+Section~\ref{sec:phases}.
+\end{revision}
+\end{theorem}
+
+\section{One polynomial model for both families}
+Use vectors $x,z$ and covectors $y,w$, and write
+\[
+ Z=\begin{pmatrix}x\cdot y&x\cdot w\\z\cdot y&z\cdot w\end{pmatrix}.
+\]
+Let $(A,B)$ be its row degrees and $(C,D)$ its column degrees:
+\[
+\begin{array}{c|cccc}
+T&A&B&C&D\\\hline
+\mathrm I&r_1&r_3&r_2&r_4\\
+\mathrm {II}&r_1&r_2&r_3&r_4
+\end{array}
+\qquad A+B=C+D=\rho.
+\]
+Write $\mathcal H_{N,T}$ for the corresponding invariant space.
+
+\subsection{A basis from a dimension count}
+\begin{lemma}\label{lem:pairingbasis}
+Put $b=\min(A,B,C,D)$. The space $\mathcal H_{N,T}$ has dimension $b+1$
+and the following basis:
+\begin{equation}\label{eq:monomial}
+ e_k=Z_{11}^{k}Z_{12}^{A-k}Z_{21}^{C-k}Z_{22}^{B-C+k},
+ \qquad \ell=\max(0,C-B)\le k\le u=\min(A,C).
+\end{equation}
+\end{lemma}
+\begin{proof}
+Pieri's multiplicity-free decomposition \cite[Sec.~6.1, Eq.~(6.8)]{FH} is
+\begin{equation}\label{eq:pieri}
+ S_A^{(N)}\otimes S_B^{(N)}
+ =\bigoplus_{t=0}^{\min(A,B)}\mathbb S_{(\rho-t,t)}\mathbb C^N.
+\end{equation}
+The analogous $C,D$ decomposition and Schur's lemma give exactly the
+common channels $0\le t\le b$, hence dimension $b+1$.
+Among diagrams of the same total degree, equality of the $SL_N$ highest
+weights implies equality of the diagrams. Their row lengths could differ
+only by a constant vector, and the common total degree makes it zero. Each $e_k$
+is invariant. They are independent because setting $x=e_1,z=e_2$ makes
+all four entries of $Z$ independent variables, in every $N\ge2$.
+Finally $u-\ell+1=b+1$, so these vectors form a basis.
+\end{proof}
+This uses the same pair decomposition already needed for channel
+multiplicity-freeness, and avoids a separate invariant-algebra theorem.
+
+\subsection{Determinant transport, including surjectivity}
+In dimension two put $D_x=\det(x,z)$ and $D_y=\det(y,w)$ and define
+\begin{equation}\label{eq:Fmap}
+ F_{\mathrm I}f=D_y^h f(Z),\qquad F_{\mathrm {II}}f=D_x^h f(Z).
+\end{equation}
+Write $\mathcal H_2(\boldsymbol r')$ for the shifted $SL_2$ invariant
+space. These maps have exactly the exterior degrees in
+Theorem~\ref{thm:physical}.
+\begin{lemma}\label{lem:bijection}
+Both maps are bijections onto the shifted $SL_2$ invariant spaces.
+\end{lemma}
+\begin{proof}
+Independence of $Z$ and multiplication by a nonzero determinant prove
+injectivity. For Type I, the row pair has $SL_2$ labels $\rho-2t$ and
+the shifted column pair has $\rho+2h-2s$. Matching gives $s=t+h$,
+with precisely $0\le t\le b$. Type II interchanges which pair is
+shifted and gives the same count. Thus the target also has dimension
+$b+1$, proving surjectivity.
+\end{proof}
+
+\subsection{Exact isometry by creation--annihilation adjunction}
+Write $(X_1,X_2)=(x,z)$ and $(Y_1,Y_2)=(y,w)$ for the two vector and
+two covector \emph{slots}. Their components still range from $1$ to $N$.
+Let $M_{ij}$ multiply by $Z_{ij}=X_i\cdot Y_j$ and let
+$\Delta_{ij}^{(N)}=\sum_\alpha
+\partial_{(X_i)_\alpha}\partial_{(Y_j)_\alpha}$.
+For a polynomial $f$ in the four formal entries of $Z$, the chain rule is
+\begin{equation}\label{eq:radial}
+ \Delta_{ij}^{(N)}f(Z)=
+ N\partial_{ij}f+\sum_{a,b=1}^{2}Z_{ab}\partial_{ib}\partial_{aj}f.
+\end{equation}
+For $J=D_x$ or $D_y$, the two-dimensional Euler identities for a
+determinant give, for all four pairs $i,j$,
+\begin{equation}\label{eq:detderivative}
+ \Delta_{ij}^{(2)}(J^hf(Z))
+ =J^h\bigl(\Delta_{ij}^{(2)}f(Z)+h\partial_{ij}f(Z)\bigr).
+\end{equation}
+For example $x\cdot\partial_xD_x=z\cdot\partial_zD_x=D_x$ and
+$z\cdot\partial_xD_x=x\cdot\partial_zD_x=0$; the covector identities
+are identical. Since $2+h=N$, we have the stronger transport identities
+\begin{equation}\label{eq:laddertransport}
+ M_{ij}^{(2)}F_T=F_TM_{ij}^{(N)},\qquad
+ \Delta_{ij}^{(2)}F_T=F_T\Delta_{ij}^{(N)}.
+\end{equation}
+Use the same definition of $F_T$ in each balanced multidegree: these
+identities relate neighboring homogeneous spaces.
+
+\begin{lemma}[Universal normalization]\label{lem:isometry}
+For the standard Fock inner product
+$\langle X^\alpha,X^\beta\rangle=\delta_{\alpha\beta}\alpha!$,
+\begin{equation}\label{eq:scalarisometry}
+ \langle F_Tf,F_Tg\rangle_2=h!(h+1)!\,\langle f,g\rangle_N,
+ \qquad
+ \boxed{S_T=\frac{F_T}{\sqrt{h!(h+1)!}}\ \text{is unitary}.}
+\end{equation}
+The normalization is independent of the family and all exterior labels.
+\end{lemma}
+\begin{proof}
+Put $c_h=h!(h+1)!$. In pairing degree zero, $F_T1=J^h$.
+The $h+1$ monomials in the binomial expansion of $J^h$ are orthogonal;
+each contributes $(h!)^2$. Hence $\|J^h\|^2=(h+1)(h!)^2=c_h$.
+Induct on the common pairing degree of $f,g$. By
+Lemma~\ref{lem:pairingbasis} it suffices to take $f$ a pairing monomial,
+so at positive degree $f=M_{ij}f_0$ for some $i,j$.
+Fock adjunction, \eqref{eq:laddertransport} and induction give
+\begin{align*}
+ \langle F_T(M_{ij}f_0),F_Tg\rangle_2
+ &=\langle F_Tf_0,\Delta_{ij}^{(2)}F_Tg\rangle_2\\
+ &=\langle F_Tf_0,F_T\Delta_{ij}^{(N)}g\rangle_2\\
+ &=c_h\langle f_0,\Delta_{ij}^{(N)}g\rangle_N
+ =c_h\langle M_{ij}f_0,g\rangle_N.
+\end{align*}
+Here \eqref{eq:radial} expresses $\Delta_{ij}^{(N)}g$ as a polynomial
+of pairing degree one less, in the required neighboring multidegree.
+Sesquilinearity completes the induction. Lemma~\ref{lem:bijection} makes the
+resulting isometry onto.
+\end{proof}
+
+\subsection{The adjacent Casimirs and their channel labels}
+Set $P_N=M_{11}\Delta_{11}^{(N)}$ and
+$Q_N=M_{21}\Delta_{21}^{(N)}$. Equation~\eqref{eq:laddertransport} gives
+\begin{equation}\label{eq:mixedtransport}
+ P_2S_T=S_TP_N,\qquad Q_2S_T=S_TQ_N.
+\end{equation}
+Normalize roots to squared length two and write $\Omega$ for the split
+Casimir, $\tfrac12(C_{V\otimes W}-C_V\otimes\id-\id\otimes C_W)$
+for a pair of modules $V,W$.
+For the mixed pair $x,y$ of degrees $a,b$, the $\mathfrak{gl}_N$ split
+Casimir is $-P_N$ since the covector action is the negative transpose.
+The central term is $-ab/N$, so
+\begin{equation}\label{eq:mixedomega}
+ \Omega_{xy}^{(N)}=-P_N+\frac{ab}{N}\id.
+\end{equation}
+For other mixed pairs the same formula uses their own $M_{ij}\Delta_{ij}^{(N)}$.
+For the same-orientation pair put
+$E=x\cdot\partial_z$, $G=z\cdot\partial_x$ and $E_x=x\cdot\partial_x$.
+Its $\mathfrak{gl}_N$ split Casimir is $EG-E_x$. The corresponding
+$\mathfrak{sl}_N$ operator subtracts the central term $ab/N$.
+Both $E$ and $G$ annihilate $D_x$, and the Leibniz rule gives
+$E_x(D_x^h f)=D_x^h(E_x f+hf)$. Hence
+\begin{equation}\label{eq:same}
+ \Omega_{xz}^{\mathfrak{gl}_2}S_{\mathrm {II}}
+ =S_{\mathrm {II}}\Omega_{xz}^{\mathfrak{gl}_N}-hS_{\mathrm {II}}.
+\end{equation}
+Equations \eqref{eq:mixedomega} and \eqref{eq:same} give
+\begin{equation}\label{eq:affine}
+ \Omega_{12}^{(2)}S_T=S_T\Omega_{12}^{(N)}+c_{12}S_T,
+ \qquad
+ \Omega_{23}^{(2)}S_T=S_T\Omega_{23}^{(N)}+c_{23}S_T.
+\end{equation}
+Explicitly, with $(a,b,c,d)=\boldsymbol r$,
+\begin{align*}
+ \mathrm I:\quad&c_{12}=\frac{a(b+h)}2-\frac{ab}{N},
+ &c_{23}&=\frac{c(b+h)}2-\frac{bc}{N},\\
+ \mathrm {II}:\quad&c_{12}=-h-\frac{(a+h)(b+h)}2+\frac{ab}{N},
+ &c_{23}&=\frac{(b+h)c}2-\frac{bc}{N}.
+\end{align*}
+On a mixed channel of contraction number $s$, the eigenvalue of
+$M\Delta$ is
+\begin{equation}\label{eq:mixedspec}
+ s(a+b+N-s-1),\qquad 0\le s\le\min(a,b).
+\end{equation}
+This follows by iterating $\Delta M-M\Delta=E_x+E_y+N$ on harmonics.
+The eigenvalues are distinct. The determinant shift increases one exterior
+degree by $h$ and keeps $s$ fixed, so the mixed label increases by $h$.
+For the same-orientation channel $(\rho-t,t)$, $\rho=a+b$,
+\begin{equation}\label{eq:samespec}
+ \Omega_{xz}^{\mathfrak{gl}_N}=ab-t(\rho-t+1).
+\end{equation}
+Substitution of $(a+h,b+h,t+h)$ decreases this by $h$, exactly as in
+\eqref{eq:same}, and leaves the label $a+b-2t$ unchanged.
+The lower-bound calculation uses
+$\max(|x+h|,|x-h|)=|x|+h$ for $h\ge0$.
+The shifted triangle bounds give precisely these channels: Type I
+translates both ranges by $h$; Type II keeps the $i$ range and translates
+the $j$ range. Thus $S_T$ matches both normalized classical coupling
+bases, up to phases, with exactly the labels in the theorem.
+
+\section{An independent analytic route to the quantum statement}\label{sec:KZroute}
+\begin{revision}
+This section retains the analytic argument based on the published unitary
+Kazhdan--Lusztig equivalence. That external theorem is not a dependency or
+hypothesis of the completed Lean coefficient certificate: the direct
+quantum proof is given in Section~\ref{sec:certified}.
+\end{revision}
+\begin{lemma}[Affine Casimir transport of recoupling]\label{lem:KZ}
+Suppose two classical multiplicity spaces have one-dimensional channel
+spaces and a unitary bijection $S$ satisfying
+$A'S=S A+\alpha S$ and $B'S=S B+\beta S$ for their two pair Casimirs,
+with real $\alpha,\beta$. Suppose also that $S$ matches the specified
+channel labels. Their quantum recoupling matrices, at the same positive
+deformation parameter, then agree up to row and column phases.
+\end{lemma}
+\begin{proof}
+Put $\eta=\log v/(\pi i)\in i\mathbb R$. The KZ associator is the
+regularized connection matrix for
+\begin{equation}\label{eq:KZ}
+ \frac{dG}{dz}=\eta\left(\frac A z+\frac B{z-1}\right)G.
+\end{equation}
+Write $G_0$ for the solution normalized at $0$ and $G_1$ for that normalized
+at $1$, so $\Phi(\eta A,\eta B)=G_1^{-1}G_0$. Simultaneous conjugation by
+$S$ conjugates both solutions. Adding $\alpha\id$ to $A$ and
+$\beta\id$ to $B$ multiplies both normalized solutions by the same scalar
+$z^{\eta\alpha}(1-z)^{\eta\beta}$. This scalar cancels from their ratio.
+Therefore
+\begin{equation}\label{eq:Phiintertwine}
+ \Phi(\eta A',\eta B')S=S\Phi(\eta A,\eta B).
+\end{equation}
+These properties are also stated directly in \cite[Sec.~2, p.~14]{NT}.
+
+The nontrivial representation-theoretic input is the \emph{unitary}
+Kazhdan--Lusztig/Drinfeld equivalence, in the precise form of
+\cite[Theorem~3.1]{NT}: for every $v>0$ the category of classical compact
+group modules with associator $\Phi(\eta\Omega_{12},\eta\Omega_{23})$
+is unitarily monoidally equivalent to the category of $U_v(\mathfrak g)$
+modules, with irreducible highest weights identified. Thus a quantum
+recoupling matrix is the matrix of this associator between the two
+\emph{classical} orthonormal coupling bases, up to their vertex phases.
+In the classical invariant-tensor realization, bending an intertwiner
+with the unnormalized coevaluation gives the Hilbert--Schmidt pairing
+of the two intertwiners. If $f^*g=\langle f,g\rangle\id$ on the output
+irrep, this pairing is $\dim(V_4^*)\langle f,g\rangle$. The Fock metric
+can supply an additional fixed scalar for the exterior degrees. Both
+scalars cancel on normalization. In the convention of the overlap matrix
+above, the associator gives entries
+\begin{equation}\label{eq:Fentry}
+ \langle \Phi(\eta A,\eta B)L_i,R_j\rangle
+\end{equation}
+up to row and column phases. The opposite pairing gives the conjugate
+entries of the corresponding coordinate change. The tensor equivalence
+is unitary, so the choices on the one-dimensional vertex spaces differ
+only by unit phases.
+
+Since $S$ sends $L_i$ and $R_j$ to their matched channel morphisms up to
+phases, \eqref{eq:Phiintertwine} makes the entries \eqref{eq:Fentry} equal
+up to independent row and column phases. This proves the lemma.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:physical}]
+Apply Lemma~\ref{lem:KZ} with $A=\Omega_{12}^{(N)}$,
+$B=\Omega_{23}^{(N)}$, and $S=S_T$ from \eqref{eq:scalarisometry}.
+Lemmas~\ref{lem:bijection} and \ref{lem:isometry}, together with
+\eqref{eq:affine}--\eqref{eq:samespec}, verify every hypothesis.
+In diagram form, the established commuting square is
+\[
+\begin{tikzcd}[column sep=large,row sep=large]
+\mathcal H_{N,T} \arrow[r,"S_T"]
+ \arrow[d,"{\Phi(\eta\Omega^{(N)}_{12},\eta\Omega^{(N)}_{23})}"']
+ &\mathcal H_{2}(\boldsymbol r')
+ \arrow[d,"{\Phi(\eta\Omega^{(2)}_{12},\eta\Omega^{(2)}_{23})}"]\\
+\mathcal H_{N,T} \arrow[r,"S_T"']&\mathcal H_{2}(\boldsymbol r').
+\end{tikzcd}
+\]
+The normalized recoupling matrices therefore agree up to vertex phases
+for every $v>0$. At $v=1$ the associator is the identity and the comparison
+reduces to the classical isometry $S_T$. Section~\ref{sec:continuation}
+constructs the continuation of the calibrated coefficient matrix from
+explicit finite expressions.
+\end{proof}
+
+\section{Recovery of the complete signed AMS sum}
+Let $X_i,Y_j$ be the two higher-rank intermediate irreducibles and let
+$d_i=\dim_v X_i$, $e_j=\dim_v Y_j$. Define
+\begin{align}
+ \theta_N(a,b,c)^2
+ &=\frac{\qf{(a+b-c)/2}\qf{(a+c-b)/2}\qf{(b+c-a)/2}}
+          {\qf{(a+b+c)/2+N-1}},\label{eq:theta}\\
+ K_N&=\qf{N-1}\qf{N-2}
+ \theta_N(r_1,r_2,i)\theta_N(r_3,r_4,i)
+ \theta_N(r_1,r_4,j)\theta_N(r_2,r_3,j).\label{eq:KN}
+\end{align}
+At positive $v$ all square roots in this section are positive.
+$K_2'$ denotes the same expression at the shifted rank-two labels.
+
+\begin{lemma}[Normalization cancellation]\label{lem:norm}
+For either type,
+\begin{equation}\label{eq:norm}
+ d_i e_j\left(\frac{K_N}{K_2'}\right)^2
+       =[i'+1]_v[j'+1]_v.
+\end{equation}
+\end{lemma}
+\begin{proof}
+Put $c_N=\qf{N-1}\qf{N-2}$.
+The quantum Weyl dimension formula gives, for a mixed channel $(p,q)$,
+\begin{equation}\label{eq:mixeddim}
+ D_N(p,q)=\frac{[p+q+N-1]_v\qf{p+h}\qf{q+h}}
+                    {\qf p\qf q\,c_N},
+\end{equation}
+and for a two-row channel $(\rho-t,t)$,
+\begin{equation}\label{eq:samedim}
+ D_N(\rho-t,t)=
+ \frac{[\rho-2t+1]_v\qf{\rho-t+h+1}\qf{t+h}}
+ {\qf{\rho-t+1}\qf t\,c_N}.
+\end{equation}
+For Type I, at the $12$ face write $u=(r_1+r_2-i)/2$,
+$p=r_1-u$, $q=r_2-u$. The ratio of the squared triangle factors at this
+face is $\qf q/\qf{q+h}$, and at the complementary $34$ face it is
+$\qf p/\qf{p+h}$. Their product times \eqref{eq:mixeddim} is
+$[i+h+1]_v/c_N$. The same calculation on the other two faces gives
+$[j+h+1]_v/c_N$.
+
+For Type II put $\rho=r_1+r_2=r_3+r_4$ and
+$t=(\rho-i)/2$. The ratios at faces $12,34$ are respectively
+\[
+ \frac{\qf t}{\qf{t+h}},\qquad
+ \frac{\qf{\rho-t+1}}{\qf{\rho-t+h+1}}.
+\]
+Multiplication by \eqref{eq:samedim} leaves $[i+1]_v/c_N$.
+The $23,14$ faces are mixed and leave $[j+h+1]_v/c_N$, as above.
+The factor $c_N^2$ from \eqref{eq:KN} cancels both denominators.
+\end{proof}
+
+Set $\rho=(r_1+r_2+r_3+r_4)/2$ and
+\begin{align*}
+ a_0&=(r_3+r_4-i)/2,&b_0&=(r_1+r_2-i)/2+h\delta_{T,\mathrm {II}},\\
+ c_0&=(r_2+r_3-j)/2,&d_0&=(r_1+r_4-j)/2,\\
+ e_0&=(i+j-r_2-r_4)/2,&f_0&=(i+j-r_1-r_3)/2+h\delta_{T,\mathrm I}.
+\end{align*}
+Define the fully supported factorial sum
+\begin{equation}\label{eq:AMSkernel}
+ I_{N,T}=\sum_{u=\max(0,-e_0,-f_0)}^{\min(a_0,b_0,c_0,d_0)}
+ \frac{(-1)^{\rho-u}\qf{\rho+N-1-u}}
+ {\qf u\qf{a_0-u}\qf{b_0-u}\qf{c_0-u}\qf{d_0-u}
+  \qf{e_0+u}\qf{f_0+u}}.
+\end{equation}
+Every factorial argument in the sum is nonnegative. These offsets give
+precisely the support of AMS Eq.~(35). In Type I the balance gives
+$f_0=e_0+h$, so the lower bound is $\max(0,-e_0)$. In Type II it gives
+$b_0=a_0+h$, so the upper bound is $\min(a_0,c_0,d_0)$. Thus neither
+shifted offset adds summation terms relative to the bounds of AMS.
+
+\begin{corollary}[AMS Eq.~(35)]\label{cor:AMS}
+For $v>0$, $v\ne1$, choose the channel phases as in
+Section~\ref{sec:phases} for each admissible exterior quadruple. The physical higher-rank
+quantum $6j$ symbol for either family is
+\begin{equation}\label{eq:AMSproved}
+ \boxed{\displaystyle\Phi_{N,T}(\boldsymbol r;i,j)=K_N I_{N,T}.}
+\end{equation}
+Equivalently,
+\begin{equation}\label{eq:rank6j}
+ \Phi_{N,T}=(-1)^h\sqrt{\frac{[i'+1]_v[j'+1]_v}{d_i e_j}}
+ \brac{r'_1/2&r'_2/2&i'/2}{r'_3/2&r'_4/2&j'/2}_{v}.
+\end{equation}
+For preassigned normalized vertex conventions, these formulas carry
+the corresponding independent row and column phase factors.
+\end{corollary}
+\begin{proof}
+First apply the independently established physical reduction
+\eqref{eq:physical}. The ordinary rank-two quantum Racah evaluation
+\cite{KR} has triangle product $K_2'$ and scalar factorial sum $I_2'$.
+\begin{revision}
+Both the physical reduction and this finite rank-two evaluation are now
+proved in Lean by the direct construction in Section~\ref{sec:certified}.
+The certified phase convention is made explicit in Section~\ref{sec:phases}.
+\end{revision}
+Under the shifts in Theorem~\ref{thm:physical},
+$\rho'=\rho+h$ and all six rank-two denominator offsets are exactly
+$(a_0,b_0,c_0,d_0,e_0,f_0)$. The numerator factorial is unchanged because
+$\rho'+1-u=\rho+N-1-u$. Thus, including the entire effective support,
+\begin{equation}\label{eq:scalarshift}
+ I_{N,T}=(-1)^h I_2',\qquad
+ \brac{r'_1/2&r'_2/2&i'/2}{r'_3/2&r'_4/2&j'/2}_{v}=K_2'I_2'.
+\end{equation}
+
+Lemma~\ref{lem:norm} shows that the positive normalization needed to
+convert the physical normalized matrices is exactly $K_N/K_2'$.
+The only remaining freedom is therefore the phases already present in
+Theorem~\ref{thm:physical}. Fix them by transporting the standard rank-two
+Racah convention through that theorem and choosing the common sign
+$(-1)^h$ for the $6j$ coefficient. For the fixed exterior quadruple this chooses channel
+vertex phases, independently of individual matrix entries. It defines the
+AMS-compatible convention in \eqref{eq:rank6j}. With the standard rank-two
+recoupling convention
+$\mathsf U_{2,ij}=(-1)^{\rho'}\sqrt{[i'+1]_v[j'+1]_v}\{6j\}_{v}$,
+it amounts to $\sqrt{d_i e_j}\Phi_{N,T}=(-1)^\rho\mathsf U_{2,ij}$.
+Finally \eqref{eq:scalarshift} gives \eqref{eq:AMSproved}.
+
+\begin{revision}
+The logical order in both routes is the same: first identify the actual
+higher-rank overlaps by independent physical transport (the analytic
+argument in Section~\ref{sec:KZroute} or the direct certified argument in
+Section~\ref{sec:certified}), then evaluate the factorial sum.
+The physical reduction is proved without the higher-rank candidate.
+\end{revision}
+\end{proof}
+
+\begin{revision}
+\section{The complete finite quantum proof}\label{sec:certified}
+The following is the direct proof used by the Lean certificate. It proves
+the physical rank reduction independently of the AMS candidate and of the
+Kazhdan--Lusztig equivalence. The classical determinant argument above is
+retained as a separate analytic proof and explanation of the shifts.
+Throughout this section $v>0$, $v\ne1$, and $N=h+2$.
+
+\subsection{Physical spaces, metrics and completeness}
+The source spaces are actual highest-weight multiplicity spaces in
+\[
+ \mathrm I:\quad S_l\otimes S_m^*\otimes S_c\longleftarrow S_d,
+ \quad d=l+c-m\ge0,
+ \qquad
+ \mathrm {II}:\quad S_a\otimes S_b\otimes S_c^*\longleftarrow S_d,
+ \quad a+b=c+d.
+\]
+They are realized by finite occupation modules. The generator actions are
+checked against the defining quantum-group relations; tensor actions,
+duality maps, compact positive metrics and the relevant intertwiners are
+constructed explicitly. The highest spaces are defined by their raising
+and weight equations, before any recoupling formula is introduced.
+
+For Type I put
+\begin{equation}\label{eq:certIindices}
+ \mathcal J(l,m,c)=\{s\in\mathbb Z:\max(0,m-c)\le s\le\min(l,m)\}.
+\end{equation}
+The physical cup vectors $b_s$ have exactly these indices. Their selected
+occupation coordinates are triangular with nonzero diagonal, proving
+linear independence. The actual mixed pair decompositions and Hom bending
+give the opposite dimension bound for the whole highest space: the common
+channels obey $r-s=c-m$, hence precisely \eqref{eq:certIindices}.
+Thus the cup span equals the entire independently defined highest space.
+The same argument proves completeness after the rank-two shift.
+
+For Type II let
+\begin{equation}\label{eq:certIIindices}
+ B=\min(a,b,c,d),\qquad r=0,\ldots,B,
+ \qquad t\in\mathcal J(a,c,b).
+\end{equation}
+The actual two-row channel intertwiners, bent with the physical cup and
+divided by their positive norms, give orthonormal vectors $L_r$.
+The complete two-row decompositions on the two sides give dimension
+$B+1$; therefore these vectors form a basis of the entire highest space.
+The independently constructed mixed right channels give a complete
+orthonormal basis $R_t$ of the same space. Their physical channel membership
+is proved using the actual intertwiners, rather than postulated from an
+overlap matrix. These completeness results include all zero labels and
+one-dimensional boundary cases.
+
+\subsection{Type I: simultaneous radial transport}
+Let $P_N,Q_N$ be the two actual cup creation--annihilation radial operators
+on the complete Type-I highest space. Their matrices in the cup basis
+are opposite bidiagonal matrices, including the vanishing endpoint terms.
+Here is the literal coefficient calculation. Write $n=N-1$ and let
+$\beta$ denote the middle background degree, to distinguish it from the
+rank shift $h$. The cup monomials $b_{s,k}$ have $s+k=m$, with total
+middle exterior degree $\beta+m$. The left operator acts by
+\begin{align}
+ P_{n,\beta}b_{s,k}
+   &=A_{n,\beta}(s,k)b_{s,k}
+       +B_{n,\beta}(s,k)b_{s+1,k-1},\notag\\
+ A_{n,\beta}(s,k)
+   &=v^{-l-\beta-s-k-n+2}[s]_v[l+\beta+k+n]_v,\notag\\
+ B_{n,\beta}(s,k)
+   &=(-1)^n v^{1-n-\beta-c-2s}[l-s]_v[k]_v.
+ \label{eq:certIcoefficients}
+\end{align}
+The right operator is obtained by interchanging $(l,s)$ with $(c,k)$.
+A forbidden neighboring term is zero: its coefficient contains the
+corresponding $[0]_v$. Comparing $(n,\beta)=(h+1,0)$ with $(1,h)$,
+the diagonal coefficients are identical and the off-diagonal coefficients
+differ by $(-1)^h$. Consequently the explicitly defined map
+\begin{equation}\label{eq:certIraw}
+ F_Ib_s=(-1)^{hs}b'_s
+ \quad\text{satisfies}\quad F_IP_N=P'_2F_I,\qquad F_IQ_N=Q'_2F_I.
+\end{equation}
+Here the target has exterior labels $(l,m+h,c,d+h)$.
+The definition is a cup-basis map, not an identity fitted to Racah entries.
+
+The actual metric makes both radial operators selfadjoint. The following
+elementary fact supplies the single metric correction.
+\begin{lemma}[Bidiagonal metric uniqueness]\label{lem:gram}
+Let $e_\ell,\ldots,e_u$ be a real basis and
+\[
+ Pe_k=\alpha_ke_k+\beta_ke_{k+1},\qquad
+ Qe_k=\gamma_ke_k+\delta_ke_{k-1},
+\]
+with endpoint terms omitted. Suppose $\alpha_u\ne\alpha_k$ for $k<u$
+and $\delta_k\ne0$ for $k>\ell$. A bilinear form making $P,Q$
+selfadjoint is determined by its value on $(e_u,e_u)$.
+\end{lemma}
+\begin{proof}
+Subtract two such forms and call the difference $H$, with
+$H(e_u,e_u)=0$. Selfadjointness of $P$ gives
+\[
+ (\alpha_u-\alpha_k)H(e_u,e_k)=\beta_kH(e_u,e_{k+1}).
+\]
+Descending induction kills the top row. If row $k+1$ is zero, then
+\[
+ \delta_{k+1}H(e_k,w)
+ =H(e_{k+1},Qw)-\gamma_{k+1}H(e_{k+1},w)=0
+\]
+for every $w$. Descending induction kills every row. Neither symmetry
+nor positivity is needed for uniqueness.
+\end{proof}
+
+For the source in \eqref{eq:certIcoefficients}, the top index is
+$u=\min(l,m)$ and the left diagonal difference is
+\[
+ A_{h+1,0}(u,m-u)-A_{h+1,0}(s,m-s)
+ =v^{-l-m-h+1}[u-s]_v[l+m+h+1-u-s]_v>0
+ \quad(s<u).
+\]
+The right lowering coefficient is nonzero for
+$s>\max(0,m-c)$, since its two quantum-integer factors are $[s]_v$
+and $[c-m+s]_v$. Thus the required top-eigenvalue separation and
+nonzero interior lower coefficients hold, also when the index set has
+only one element. Apply the lemma to the physical
+metric and the pullback through $F_I$. The pullback equals $\kappa$ times
+the source metric, where $\kappa=\|F_I b_u\|_2^2/\|b_u\|_N^2>0$.
+Thus $E_I=\kappa^{-1/2}F_I$ is an onto isometry simultaneously
+intertwining both radial operators. Their full eigenspaces are proved to
+be exactly the actual irreducible coupling channels, and their channel
+eigenvalues are distinct. Hence $E_I$ matches both complete channel bases
+with the Type-I labels in Theorem~\ref{thm:physical}.
+For $s,t\in\mathcal J(l,m,c)$ the actual channel labels and their shifts are
+\begin{equation}\label{eq:certIlabels}
+ i=l+m-2s,\qquad j=c-m+2t,\qquad i'=i+h,\quad j'=j+h.
+\end{equation}
+After the independent rank-two occupation-to-standard identification, the
+map is the one called \lean{fullPhysicalHighestToStandard} in Lean.
+This proves Type I on the whole physical space, not merely on a cup subspace.
+
+\subsection{Type II: the full shifted-channel comparison}
+The target is the standard rank-two highest space in
+$S_{a+h}\otimes S_{b+h}\otimes S_c$ with output $S_d$.
+Its left paths have contraction indices
+\begin{equation}\label{eq:certIIpaths}
+ (r+h,c-r),\quad 0\le r\le B,
+ \qquad\text{and its right paths have indices}\quad(c-t,t+h).
+\end{equation}
+The triangle inequalities show that these lists exhaust the fixed-output
+left and right paths. In particular their labels are
+\begin{equation}\label{eq:certIIlabels}
+ i=a+b-2r,\quad i'=i,\qquad
+ j=b-c+2t,\quad j'=j+h.
+\end{equation}
+Let $L'_r,R'_t$ denote the independent standard unit CG trees for these
+paths. Both are complete orthonormal bases. Define the full-space map
+\begin{equation}\label{eq:certIIE}
+ E_{a,b,c,d}L_r=(-1)^rL'_r.
+\end{equation}
+This is an onto isometry because it sends one independently constructed
+orthonormal basis to another. This fact alone says nothing about the
+right channels. The remaining steps establish that missing comparison.
+
+\subsubsection*{The actual norm and the coordinate identity}
+Let $V_r$ be the unnormalized physical bent left highest vector. The
+physical cup, the actual partial-channel isometry and the pivotal trace give
+\begin{equation}\label{eq:certIInorm}
+ \|V_r\|_N^2=
+ \frac{\dim_v T_{a+b,r}}{\dim_v S_d^{(N)}}.
+\end{equation}
+Here $T_{a+b,r}$ denotes the channel of Young shape $(a+b-r,r)$.
+Both dimensions are actual pivotal traces, whose evaluation gives the
+closed factorial expressions used below.
+For the raw rank-two highest coupling of sizes $A,B$ and contraction $u$,
+write
+\[
+ H(A,B,u)=v^{-2u(B-u)}
+ \frac{\qf u\qf{A-u}\qf{B-u}\qf{A+B-u+1}}
+      {\qf A\qf B\qf{A+B-2u+1}}.
+\]
+This is its independently evaluated squared norm in the standard compact
+metric. Set $i=a+b-2r$ and
+\[
+ A_r=v^{-hr}\sqrt{\frac{H(a+h,b+h,r+h)}{H(a,b,r)}},
+ \qquad B_r=\sqrt{\frac{[i+1]_v}{[d+1]_v}}.
+\]
+The explicit finite CG bending calculation, including its sign, proves that
+the shifted raw bent vector equals $(-1)^rB_rL'_r$ after the fixed
+weight-reversal identification. Direct cancellation of the norm factorials
+then gives
+\begin{align}
+ A_rB_r&=\sqrt{C_{h;a,b,d}}\,\|V_r\|_N,\label{eq:certIIuniversal}\\
+ C_{h;a,b,d}
+ &=v^{-2hb}\frac{\qf h\qf a\qf b\qf{d+h+1}}
+                      {\qf{a+h}\qf{b+h}\qf{d+1}}>0.
+ \label{eq:certIIC}
+\end{align}
+This factor is independent of the intermediate channel $r$. It is the
+factor for the occupation and bending normalizations used here; the
+classical polynomial Fock map in \eqref{eq:scalarisometry} uses different
+degree normalizations and has the factor $h!(h+1)!$.
+
+Let $\pi_N$ retain physical occupation-basis terms supported on the first
+two coordinates of each slot and identify each retained occupation with
+its second-coordinate count. On the target, $\mathcal B$ reassociates the
+tensor factors and reverses the third standard weight index $z\mapsto c-z$.
+In these boundary coordinates $\xi_k^h$ extracts the coefficient
+$(0,k+h,k)$ for $0\le k\le B$. In the unreversed standard basis that
+coefficient has index $(0,k+h,c-k)$.
+The complete finite CG calculation and \eqref{eq:certIIuniversal} imply
+\begin{equation}\label{eq:certIIcoordinate}
+ \xi_k^h(\mathcal B E_{a,b,c,d}x)
+   =C_{h;a,b,d}^{-1/2}v^{-hk}\xi_k^0(\pi_Nx)
+ \qquad\text{for every physical highest vector }x.
+\end{equation}
+To see the scaling on each $L_r$, write $W_r^h$ for the unnormalized
+shifted bent vector in the boundary coordinates. The finite CG calculation
+gives $A_r\xi_k^h(W_r^h)=v^{-hk}\xi_k^0(W_r^0)$.
+Here $W_r^h=B_r\mathcal B E L_r$ and
+$W_r^0=\|V_r\|_N\pi_N L_r$. Substitution of
+\eqref{eq:certIIuniversal} gives \eqref{eq:certIIcoordinate} on each basis
+vector, and linearity gives it on the whole space. The selected
+coefficients of $W_r^h$ vanish for $k<r$ and have leading coefficient
+\[
+ \frac{(-1)^r}{\sqrt{H(d,c,r)H(a+h,b+h,r+h)}}\quad(k=r).
+\]
+Together with completeness this triangularity proves that the selected
+coordinates determine every vector of the entire shifted highest space.
+Thus equality of these coordinates will imply a full vector identity.
+
+\subsubsection*{Creation transport, with the endpoints included}
+Let $\mathcal C_N$ be the actual right cup creation map, increasing
+$(b,c)$ to $(b+1,c+1)$, and let $\mathcal C'_2$ be the independent
+shifted standard creation map. Write $f_k=\xi_k^0(\pi_Nx)$ and $g_k=\xi_k^h(\mathcal B Ex)$ in the
+source degrees, with $\alpha=C_{h;a,b,d}^{-1/2}$. The two-term boundary
+recurrence is intertwined by $g_k=\alpha v^{-hk}f_k$, since
+\begin{align}
+ &v^{-b-c+2k}g_k-v^{-h-1-b-c}g_{k-1}\notag\\
+ &\hspace{16mm}=\alpha v^{-hk}
+       \bigl(v^{-b-c+2k}f_k-v^{-1-b-c}f_{k-1}\bigr).
+ \label{eq:certIIdifference}
+\end{align}
+At $k=0$ both previous-coordinate terms mean zero. Coordinates outside
+the admissible finite ranges are also proved to vanish, so the same
+argument covers an enlarged range after creation. Apply
+\eqref{eq:certIIcoordinate} in the source and target degrees and use
+the whole-space coordinate injectivity. This proves the actual operator
+identity
+\begin{align}
+ E_{a,b+1,c+1,d}\mathcal C_N
+   &=\gamma\,\mathcal C'_2E_{a,b,c,d},\label{eq:certIIcreation}\\
+ \gamma&=\sqrt{\frac{C_{h;a,b,d}}{C_{h;a,b+1,d}}},
+ &\gamma^2&=v^{2h}\frac{[b+h+1]_v}{[b+1]_v}.
+ \label{eq:certIIgamma}
+\end{align}
+No right-channel identity was used to define $E$ or to prove this transport.
+
+\subsubsection*{The Gram spectrum identifies every right channel}
+For a mixed pair of degrees $b,c$, with contraction number $k$, the operator
+$\mathcal C_N^*\mathcal C_N$ has eigenvalue
+\begin{equation}\label{eq:certIIspectrum}
+ \lambda_N(b,c;k)=v^{-2b-2c}
+   \frac{[k+1]_v[b+c+N-k]_v}{[b+1]_v[c+1]_v},
+ \qquad 0\le k\le\min(b,c).
+\end{equation}
+The eigenvalue is first computed on the explicit mixed highest vector.
+Creation and its metric adjoint commute with the quantum-group action;
+cyclic generation extends the equation to the whole actual irreducible
+channel. The eigenvalues are distinct: successive numerator products have
+difference $[b+c+N-2k-2]_v>0$ whenever both $k,k+1$ are admissible.
+The denominators and the common power of $v$ are positive.
+For the shifted rank-two mixed pair the label calculation and
+\eqref{eq:certIIgamma} give exactly
+\begin{equation}\label{eq:certIIspectralmatch}
+ \gamma^2\lambda_2(b+h,c;k)=\lambda_N(b,c;k).
+\end{equation}
+
+Write primes for the shifted operators and use the adjoints given by the
+source and target metrics. Since both degree maps $E$ are isometries,
+\eqref{eq:certIIcreation} implies
+\[
+ E\,\mathcal C_N^*\mathcal C_N
+   =\gamma^2(\mathcal C'_2)^*\mathcal C'_2 E,
+\]
+with $E$ in the original degrees. Every actual $R_t$ belongs to the mixed channel
+$k=c-t$, and every independent $R'_t$ belongs to the shifted mixed channel
+with the same $k$. These are separately proved membership statements.
+Consequently $E R_t$ and $R'_t$ are unit eigenvectors of the same
+transported Gram form with eigenvalue $\lambda_N(b,c;c-t)$.
+Expand $E R_t$ in the complete orthonormal basis $\{R'_u\}$.
+The eigenvector equation and the distinct eigenvalues kill every
+coefficient except $u=t$; unit norm leaves a real sign. Hence
+\begin{equation}\label{eq:certIIright}
+ E R_t=\eta_tR'_t,\qquad\eta_t\in\{1,-1\},
+ \qquad
+ \langle L_r,R_t\rangle_N
+    =(-1)^r\eta_t\langle L'_r,R'_t\rangle_2.
+\end{equation}
+One sign is attached to each whole column. This completes the Type-II
+physical comparison and proves \eqref{eq:physical} by the direct route.
+
+\subsection{The finite rank-two evaluation is also certified}
+The target CG maps are built by solving the actual highest-vector
+recurrence and applying the lowering operator, then dividing by the
+positive highest-vector norm. Their tensor-tree overlaps define the
+rank-two Racah matrix. The certificate proves its factorial evaluation:
+the actual adjacent Casimir gives a finite Jacobi recurrence; the
+terminating $q$-Racah candidate satisfies that recurrence; an independently
+computed boundary coefficient and the nonzero recurrence coefficients
+give uniqueness. The finite $q$-Saalschutz and Sears transformations used
+to rewrite this answer as the supported Racah factorial sum are proved
+within Lean as well.
+Thus the rank-two Racah evaluation cited in the analytic proof is not an
+unproved input to the formal certificate. Combining that evaluation with
+the physical comparisons above, the actual pivotal dimension formulas,
+and Lemma~\ref{lem:norm} proves the literal four-triangle expression
+\eqref{eq:AMSproved}, with the full support \eqref{eq:AMSkernel}.
+
+\section{Precise phase conventions}\label{sec:phases}
+The following conventions fix the signs of the coefficients. All square
+roots of positive quantities use the positive root. In the standard
+rank-two weight basis $e_k^{(L)}$, the raising operator sends
+$e_k^{(L)}$ to $[k]_v e_{k-1}^{(L)}$ for $k>0$ and kills $e_0^{(L)}$.
+The diagonal Cartan eigenvalue is $v^{L-2k}$ and the squared norm is
+$w_L(k;v)=v^{k(k+1-L)}\qf{k}\qf{L-k}/\qf{L}$.
+The coproduct $E\otimes K+\id\otimes E$ gives the highest vector
+$\sum_{k=0}^u c_k e_k^{(A)}\otimes e_{u-k}^{(B)}$ for the embedding
+$S_{A+B-2u}\to S_A\otimes S_B$, with $0\le u\le\min(A,B)$ and
+\begin{equation}\label{eq:CGphase}
+ c_0=1,\qquad
+ c_{k+1}=-\frac{c_k[u-k]_v}
+ {[k+1]_v\,v^{B-2(u-k-1)}}.
+\end{equation}
+Normalize by its positive compact norm and generate descendants with the
+fixed lowering action. The standard left and right trees are compositions
+of these CG embeddings. This fixes their phases without using AMS.
+
+For Type I, compose the cup-space isometry with the standard rank-two
+identification and denote the composite again by $E_I$. Take
+\[
+ \widehat L_s=E_I^{-1}L'_s,\qquad
+ \widehat R_t=E_I^{-1}R'_t.
+\]
+Their unit norms and actual higher-rank channel membership are proved by
+the simultaneous radial comparison. For Type II use the full-space
+isometry \eqref{eq:certIIE} and put
+\begin{equation}\label{eq:certIIgauge}
+ \widehat L_r=(-1)^r L_r=E^{-1}L'_r,
+ \qquad\widehat R_t=E^{-1}R'_t=\eta_tR_t.
+\end{equation}
+The last equality follows from \eqref{eq:certIIright}; it is not a definition
+of an arbitrary entrywise sign. Both vectors are actual unit vectors in
+the required irreducible channels.
+
+With $\rho=(r_1+r_2+r_3+r_4)/2$, define the normalized overlap and the
+Wigner coefficient by
+\begin{equation}\label{eq:certWignerphase}
+ \widehat U_{ij}=\langle\widehat L_i,\widehat R_j\rangle,
+ \qquad
+ \Phi_{N,T}(\boldsymbol r;i,j)
+ =\frac{(-1)^\rho\widehat U_{ij}}{\sqrt{d_i e_j}}.
+\end{equation}
+Here $\rho=l+c$ in Type I and $\rho=a+b$ in Type II.
+With this convention the equality $\Phi_{N,T}=K_NI_{N,T}$ is exact.
+Equivalently the standard rank-two convention is
+\[
+ U'_{ij}=(-1)^{\rho'}\sqrt{[i'+1]_v[j'+1]_v}\{6j\}'_v,
+ \qquad\rho'=\rho+h,
+\]
+which explains the factor $(-1)^h$ in \eqref{eq:rank6j}.
+
+For other normalized physical vertices, write
+$\widetilde L_i=\alpha_i\widehat L_i$ and
+$\widetilde R_j=\beta_j\widehat R_j$, with unit phases.
+With an inner product conjugate-linear in its first entry,
+\[
+ \widetilde U_{ij}=\overline{\alpha_i}\beta_j\widehat U_{ij},
+ \qquad\widetilde\Phi_{ij}=\overline{\alpha_i}\beta_j\Phi_{ij}.
+\]
+For real compact conventions these phases are signs. In particular the
+original Type-II $L_r,R_t$ satisfy
+$\Phi^{\rm raw}_{rt}=(-1)^r\eta_t\Phi_{rt}$, where $r,t$ denote
+the contraction-path indices of \eqref{eq:certIIindices}.
+The certificate proves the existence of these whole-channel signs at
+each positive parameter; it does not select a parameter-independent sign
+for an unspecified external vertex convention. Any analytic continuation
+uses one continued whole-channel convention, not new signs chosen for
+individual entries.
+
+\noindent\textbf{Scope of the gauge prescription.}
+The original phase comparisons fix the exterior quadruple before choosing
+row and column signs. The theorem below strengthens them: for real
+$v>0$, $v\ne1$, one table on actual ordered highest-weight triples
+reproduces both calibrated AMS matrices simultaneously, at every
+$N\ge3$. Its Type-I trees are exactly calibrated; its two Type-II
+trees have the same exterior sign, which cancels from their overlap.
+Rank two uses its previously certified common CG table. These results
+specify an actual common gauge; they do not identify it with an unspecified
+external choice of vertices.
+
+\subsection{Global vertices: complete certification of one shared actual table}
+\label{sec:globalvertices}
+Throughout this subsection $v>0$, $v\ne1$. A \emph{global vertex}
+is chosen once for an ordered incident triple $(A,B;C)$ and reused in
+every exterior quadruple containing that triple. A separate choice for
+each quadruple, even if constant along a whole row or column, does not
+establish this property.
+
+\begin{theorem}[Exact coherence of highest carriers]\label{thm:globalcarrier}
+Let $X,Y,Z$ be actual compact highest realizations with the same highest
+weight and normalized highest generators. Write $J_{XY}$ for the
+canonical full-algebra isometric identification of their cyclic
+channels. Then
+\[
+ J_{YZ}J_{XY}=J_{XZ},\qquad J_{XX}=\id.
+\]
+Writing $P_X$ for the orthogonal projection onto the channel of $X$,
+and $\iota_Y$ for channel inclusion, the full pair transfer satisfies,
+for any fixed realization $C$ of that highest weight,
+\begin{equation}\label{eq:globalcarrierfactor}
+ T_{XY}=\iota_YJ_{XY}P_X
+       =(\iota_YJ_{CY})(J_{XC}P_X).
+\end{equation}
+Thus changing the intermediate carrier introduces no residual sign.
+\end{theorem}
+\begin{proof}
+Both $J_{YZ}J_{XY}$ and $J_{XZ}$ intertwine the entire algebra and send
+the normalized highest generator of $X$ to that of $Z$. An intertwiner
+on a cyclic module is determined by its value on the cyclic generator,
+so these maps agree on the whole channel. The identity case is the same
+argument. Substitution in the definition of $T_{XY}$ proves
+\eqref{eq:globalcarrierfactor}.
+\end{proof}
+This proof, including actual mixed, reverse mixed and two-row carriers,
+is checked in \lean{GlobalHighestCarrierCoherence.lean} and
+\lean{GlobalMixedVertices.lean}. It proves coherence of the carrier
+identifications; compatibility of the calibrated AMS coupling trees
+with a common vertex table is an additional assertion.
+
+\begin{lemma}[Global vertex signs have trivial holonomy]\label{lem:globalphases}
+Assign $g(A,B;C)\in\{1,-1\}$ once to every ordered fusion triple, and
+let $s(\tau)$ be the product of these signs over all vertices of a
+labelled binary fusion tree $\tau$. The phase factor for a change from
+$\tau$ to $\sigma$ is $s(\tau)s(\sigma)$. Along every finite path it
+depends only on the endpoint trees; its product on every closed path is
+one. In particular, on a three-input recoupling its factor is
+\begin{equation}\label{eq:globalfourvertices}
+ g(A,B;E)g(E,C;D)g(B,C;F)g(A,F;D).
+\end{equation}
+\end{lemma}
+\begin{proof}
+In a product along a path every intermediate tree sign occurs twice
+and cancels because $s(\tau)^2=1$. Expanding the two three-input tree
+signs gives \eqref{eq:globalfourvertices}.
+\end{proof}
+The arbitrary-path assertion is
+\lean{GlobalVertexSigns.pathSign_closed}. It concerns the phase factors
+along, for example, pentagon paths. It does not assert a new full
+pentagon matrix identity or by itself identify the AMS gauges with a
+global vertex family.
+
+\begin{theorem}[Both AMS families share global vertices at rank two]
+\label{thm:globalranktwo}
+For $N=2$, the single actual CG table fixed by \eqref{eq:CGphase} realizes
+the calibrated overlaps of both Type I and Type II, simultaneously for
+every admissible exterior quadruple and channel label.
+\end{theorem}
+\begin{proof}
+For Type I specialize the complete physical rank comparison to rank two
+and zero background. For Type II specialize its full-space isometry to
+$h=0$; both calibrated vectors map to the standard trees. Those trees
+are, by construction, compositions of the same CG embeddings, each of
+which depends only on its two input and output highest weights. The
+contraction number is uniquely determined by these three labels.
+\end{proof}
+The two physical overlap statements are
+\lean{physicalTypeI_global_vertices_rank_two} and
+\lean{physicalTypeII_global_vertices_rank_two} in
+\lean{AMSGlobalRankTwo.lean}.
+
+\paragraph{Actual Type-II left vertices in every rank.}
+Put $S=a+b=c+d$, and let the internal two-row representation be
+$T=(S-r,r)$. Choose its fixed highest carrier in
+$S_{S-r}^{(N)}\otimes S_r^{(N)}$.
+Equation~\eqref{eq:globalcarrierfactor} factors the actual left pair
+map through this carrier. Bending the $S_c$ input is natural with
+respect to postcomposition:
+\[
+ \operatorname{bend}(AB)
+   =(A\otimes\id)\operatorname{bend}(B).
+\]
+Consequently the \emph{entire actual left tree} factors into a vertex
+for $(S_a,S_b;T)$ and a vertex from $S_d$ to $T\otimes S_c^*$.
+Its calibrated normalization can be placed entirely at the latter
+vertex, since it is
+\begin{equation}\label{eq:globalIIleftscale}
+ (-1)^r\left(\frac{\dim_v T}{\dim_v S_d}\right)^{-1/2}.
+\end{equation}
+For $N\ge3$ the two-row highest weight determines $S$ and $r$, so
+this factor depends only on the three incident irreps. At $N=2$ we use
+Theorem~\ref{thm:globalranktwo}. The complete tree factorization and
+\eqref{eq:globalIIleftscale}, including zero labels, are checked in
+\lean{GlobalTypeIILeftVertices.lean}.
+
+\paragraph{An exact boundary sign and neighboring-degree coherence.}
+Write $n=N-1\ge1$, and use $b\ge0$ for a cup background in this
+paragraph. Let $G_{t,k}^{(n)}$ be the literal cup monomial with outer
+degrees $l,c$, obtained by applying $k$ right creations followed by $t$
+left creations to the pure seed of degrees $(l-t,b,c-k)$, where $t\le l$
+and $k\le c$.
+At the boundary
+\[
+ B_{t,k}^{(n)}=
+ (l e_0,(t+k)e_0+b e_n,c e_0)
+\]
+the full coefficient is
+\begin{equation}\label{eq:globalcupboundary}
+ G_{t,k}^{(n)}(B_{t,k}^{(n)})=
+ (-1)^{nk}v^{\,t(1-l-k)+k(1-n-b-c)}.
+\end{equation}
+Indeed, the pure first symmetric occupation forces every left creation
+to use coordinate zero; the pure third symmetric occupation forces the
+same for every right creation. The right creation coefficient at that
+coordinate has sign $(-1)^n$. Multiplying the one-path coefficients
+gives \eqref{eq:globalcupboundary}.
+
+The unnormalized cup rank transport sends
+$G_{t,k}^{(n)}$ to $(-1)^{(n-1)t}G_{t,k}^{(1)}$, with target background
+$b+n-1$. For $t+k=m$, the positive power of $v$ in
+\eqref{eq:globalcupboundary} is unchanged and the remaining boundary
+factor is the single sign $(-1)^{(n-1)m}$, independent of the cup
+term. This proves a boundary identity on the \emph{whole} cup span.
+The same calculation gives
+\[
+ R_n C_L=(-1)^{n-1}C'_L R_n,
+ \qquad R_n C_R=C'_R R_n
+\]
+between neighboring exterior degrees. These are literal creation
+operators, not signs fitted to overlaps. The proofs are in
+\lean{GlobalCupCreationCoherence.lean},
+\lean{GlobalCupFirstBoundary.lean}, and
+\lean{GlobalCupBoundaryTransport.lean}. Passing to the unitary rank
+transport only introduces the already proved positive normalization
+ratios, so the phase information is unchanged.
+
+\paragraph{The calibrated Type-II right phase is fixed locally.}
+For $a+b=c+d$, let $\beta_{abc}$ extract the coefficient at
+\[
+ (a e_0,b e_0,c e_0)
+ \quad\hbox{in }S_a\otimes S_b\otimes S_c^*.
+\]
+Here the third occupation is the first-coordinate vector in the
+opposite symmetric module. The certificate now proves
+\begin{equation}\label{eq:globalIIpositive}
+ \beta_{abc}(\widehat R_t)>0.
+\end{equation}
+To see this, take selected coordinate zero in the complete Type-II
+boundary transport. Its multiplier is positive. On the shifted
+standard tree, the highest first input leaves only the leading outer
+CG term, and the remaining inner coefficient is the positive
+last-weight factorial quotient. Thus the entire boundary coefficient
+is strictly positive. Since the physical right-channel highest line is one-dimensional,
+\eqref{eq:globalIIpositive} and unit norm uniquely determine its real
+phase. These statements are
+\lean{physicalTypeIICalibratedRight_first_boundary_pos} and
+\lean{physicalTypeIICalibratedRight_unique_positive}.
+
+There is also an exact phase comparison between neighboring
+realizations of the same mixed internal representation. With
+$r=c-t$, actual mixed creation satisfies
+\begin{equation}\label{eq:globalIIrightstep}
+ C_R\widehat R_t(a,b,c;d)=
+ \sqrt{\lambda_{n;b,c;r}}\,
+ \widehat R_t(a,b+1,c+1;d),
+\end{equation}
+where the channel index $t$ keeps its numerical value, and
+\[
+ \lambda_{n;b,c;r}=
+ v^{-2b-2c}\frac{[r+1]_v[b+c+n-r+1]_v}
+ {[b+1]_v[c+1]_v}>0.
+\]
+Actual creation maps the entire mixed channel to its successor, its
+Gram form gives this normalization, and its zero boundary coefficient
+is a positive multiple of the previous one. The unique positive unit
+vector is therefore the next calibrated vector. This is
+\lean{physicalTypeIICalibratedRight_creation} in
+\lean{GlobalTypeIIRightStep.lean}. Independently,
+\lean{GlobalMixedCreationCoherence.lean} proves on the \emph{entire}
+irreducible channel that creation equals canonical highest transport
+times an explicit positive scalar. Thus \eqref{eq:globalIIrightstep}
+contains no hidden sign depending on the exterior first or output leg.
+
+\paragraph{Whole-carrier comparison of the two mixed orientations.}
+Write $M_{p,s}=L(p\omega _1+s\omega _{N-1})$ and choose its fixed
+carrier as the contraction-zero channel in $S_p\otimes S_s^*$.
+Its normalized highest vector is the pure tensor $H_p\otimes H_s^*$,
+where $H_s^*$ denotes the highest vector of the opposite symmetric module.
+In the reverse ordering it is $H_s^*\otimes H_p$. Let $J$ be canonical highest transport and let
+$\beta_+,\beta_-$ extract the all-first-coordinate coefficients.
+The new whole-carrier identity is
+\begin{equation}\label{eq:globalorientationboundary}
+ \beta_-(Jx)=v^{ps}\beta_+(x)\qquad(x\in M_{p,s}).
+\end{equation}
+To prove it, let $\epsilon_p$ extract the highest coefficient of $S_p$.
+Then $\epsilon_pF_i=0$ and
+$\epsilon_pK_i^{-1}=v^{-p\delta_{i0}}\epsilon_p$.
+Projection of a lowering word onto the highest symmetric factor
+therefore contributes $v^{-p c_0}$ in the forward ordering and no
+factor in the reverse ordering, where $c_0$ counts occurrences of $F_0$.
+In the opposite symmetric module a lowering word follows one occupation
+path, whose all-first coefficient vanishes unless $c_0=s$.
+This proves the identity on every lowering word. Such words span the
+entire actual cyclic carrier, so linearity proves
+\eqref{eq:globalorientationboundary}, including weight spaces with
+multiplicities. No one-dimensional-weight-space assumption is used.
+The proof is included in the full workstation replay in
+\lean{MixedOrientationWordBoundary.lean},
+\lean{HighestFunctionalTransport.lean}, and
+\lean{GlobalMixedOrientationBoundary.lean}.
+
+\paragraph{Type-I creation phases and the shared right outer vertex.}
+For either calibrated Type-I channel vector with index $t$, its
+all-first boundary coefficient has sign $(-1)^{hm+m-t}$.
+At the relevant standard boundary the CG coefficient is a one-term sum
+of sign $(-1)^{m-t}$. The whole-cup boundary transport contributes
+$(-1)^{hm}$. Channel membership, unit norm and the strict signed
+boundary inequality uniquely determine each vector. Actual creation
+then satisfies
+\begin{align}
+ C_L\widehat L_t(l,m,c)
+   &=(-1)^h\sqrt{\lambda_{n;l,m;t}}\,
+       \widehat L_{t+1}(l+1,m+1,c),\notag\\
+ C_R\widehat R_t(l,m,c)
+   &=\sqrt{\lambda_{n;m,c;m-t}}\,
+       \widehat R_t(l,m+1,c+1).
+ \label{eq:globalIsteps}
+\end{align}
+The proofs include zero exterior degrees and use actual channel images
+and creation Gram forms. They are included in the full replay in
+\lean{GlobalTypeILeftStep.lean} and
+\lean{GlobalTypeIRightStep.lean}. Iteration removes the choice of
+mixed-pair realization from the two outer highest vectors.
+
+More precisely, for $a+p=s+d$ and $s\le a$ there is an actual
+isometric intertwiner
+\[
+ F_{a;p,s;d}:S_d\longrightarrow S_a\otimes M_{p,s},
+\]
+defined by the contraction-zero calibrated Type-II right tree and
+projection onto the fixed carrier. Let $C_r^+,C_r^-$ be the normalized
+forward and reversed mixed embeddings into degrees $(p+r,s+r)$ and
+$(s+r,p+r)$, respectively. The same $F$ satisfies
+\begin{align}
+ (\id\otimes C_r^+)F_{a;p,s;d}H_d
+   &=\widehat R_s^{\rm II}(a,p+r,s+r;d),\notag\\
+ (\id\otimes C_r^-)F_{a;p,s;d}H_d
+   &=(-1)^{hs}\widehat R_s^{\rm I}(a,s+r,p+r;d).
+ \label{eq:globalsharedright}
+\end{align}
+At $r=0$, \eqref{eq:globalorientationboundary} and the strict boundary
+signs determine the relative phase. Positive creation transport extends
+the equality to every $r$. The composed maps intertwine the entire
+quantum algebra and preserve the actual compact metrics; the Type-II
+factorization holds on the whole output module. These results are included in the full
+workstation replay in
+\lean{GlobalTypeIIRightVertices.lean},
+\lean{GlobalTypeIRightIIComparison.lean}, and
+\lean{GlobalSharedRightVertices.lean}.
+Thus the two families literally reuse one right outer vertex, with a
+relative sign depending only on its incident labels.
+
+\begin{theorem}[One shared actual AMS vertex table]\label{thm:actualAMStable}
+Let $N=h+2\ge3$, $v>0$, and $v\ne1$. There is one table of real
+isometric intertwiners
+\[
+ \Gamma_{AB}^{C}:V_C\longrightarrow V_A\otimes V_B
+\]
+on the ordered actual highest-weight triples occurring in the two AMS
+families. The carriers $V_A$ and the table are fixed before choosing
+an exterior quadruple or a family. Evaluating the two composed trees on the normalized output
+highest vector gives, after a common external isometric identification,
+\begin{align}
+ L_s^\Gamma&=\widehat L_s^{\rm I},&
+ R_t^\Gamma&=\widehat R_t^{\rm I}
+ &&\text{in Type I},\notag\\
+ L_r^\Gamma&=(-1)^{hc}\widehat L_r^{\rm II},&
+ R_t^\Gamma&=(-1)^{hc}\widehat R_t^{\rm II}
+ &&\text{in Type II }(a+b=c+d).
+ \label{eq:actualAMStrees}
+\end{align}
+Consequently its actual recoupling matrices equal the calibrated AMS
+matrices in both families, for every admissible label. With the
+exterior Wigner sign and actual pivotal dimensions prescribed above,
+its $6j$ coefficients satisfy the literal signed four-triangle
+AMS Eq.~(35).
+\end{theorem}
+
+\paragraph{A table indexed by actual weights.}
+For each actual dominant Dynkin weight $\lambda$, choose once a complete
+finite compact highest carrier $V_\lambda$ and a normalized highest
+vector $H_\lambda$. Identify any other realization of that weight with
+it by the highest-preserving isometry of
+Theorem~\ref{thm:globalcarrier}. The Lean index
+\lean{ActualIrrep} is the Dynkin weight together with a
+\emph{propositional} existence witness; no construction label is part
+of the index. Thus $M_{p,0}=S_p$, $M_{0,s}=S_s^*$, the zero-degree
+objects are one unit object, and, writing
+\[
+ T_{S,r}=L((S-2r)\omega _1+r\omega _2),\qquad 2r\le S,
+\]
+we have $T_{S,0}=S_S$ and $T_{S,r}=M_{S-2r,r}$ at $N=3$.
+The native two-row carrier in $S_a\otimes S_b$ has this same actual
+index with $S=a+b$. These equalities are checked in
+\lean{ActualAMSCarriers.lean}, \lean{ActualTwoRowDynkin.lean}, and
+\lean{ActualAMSVertexAliases.lean}.
+
+\paragraph{One common positive boundary.}
+Put $\epsilon_A(x)=\langle H_A,x\rangle$. Fix a real linear functional
+$\Lambda_B$ using only the actual weight of $B$, in the following
+order: on a pure symmetric carrier use occupation augmentation
+(the sum of all occupation-basis coefficients); on a nonzero pure
+opposite symmetric carrier use the same augmentation in its native
+opposite basis; on $M_{p,s}$ with $p,s>0$ use the all-first coefficient
+in its contraction-zero carrier inside $S_p\otimes S_s^*$.
+Transport these functionals canonically to the chosen actual carrier.
+The unit uses the first case. On the projected Cartan lines used
+below, the pure mixed endpoint boundary agrees with this choice.
+No independent functional is assigned to a second name for the same
+weight; equality of augmentation and a single coefficient on the
+entire carrier is not required.
+Only these second-input objects occur in the six AMS vertex roles.
+
+For an admissible triple, define $P_{AB}^{C}$ by
+\begin{equation}\label{eq:actualpositivevertex}
+ \|P_{AB}^{C}H_C\|=1,\qquad
+ (\epsilon_A\otimes\Lambda_B)(P_{AB}^{C}H_C)>0,
+ \qquad P_{AB}^{C}\text{ intertwines }U_v(\mathfrak{sl}_N).
+\end{equation}
+The relevant highest line is one-dimensional. Its two unit vectors
+have opposite nonzero boundary values, so precisely one is positive.
+A full intertwiner from the cyclic source is determined by this
+highest image. Hence \eqref{eq:actualpositivevertex} chooses a
+\emph{unique full map}, independent of its construction. Existence
+and full isometry are established below for every AMS role; they are
+not hypotheses left to the reader. The common boundary and this
+uniqueness argument are formalized in
+\lean{ActualAMSBoundary.lean}, \lean{ActualPositiveVertexTable.lean},
+and the endpoint comparisons in
+\lean{PureMixedCarrierBoundary.lean} and
+\lean{ActualMixedBoundaryCartan.lean}.
+
+\paragraph{The intrinsic phase.}
+For $\lambda=(\lambda_1,\ldots,\lambda_{N-1})$ set
+\[
+ b(\lambda)=\sum_{i=1}^{N-1}i\lambda_i,\qquad
+ D(A,B;C)=b(A)+b(B)-b(C).
+\]
+The shared table is explicitly
+\begin{equation}\label{eq:actualAMSphase}
+ \Gamma_{AB}^{C}=\gamma(A,B;C)P_{AB}^{C},\qquad
+ \gamma(A,B;C)=
+ \begin{cases}
+  1,& B=S_k\text{ for some }k\ge0,\\
+  (-1)^{hD(A,B;C)/N},&\text{otherwise}.
+ \end{cases}
+\end{equation}
+On every relevant triple $D$ is a nonnegative multiple of $N$.
+Thus this is a sign depending solely on the ordered actual triple.
+In particular, $b(M_{p,s})=p+(N-1)s$ and $b(T_{S,r})=S$.
+The complete list is
+\begin{center}\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+$A,B;C$ & condition & $D/N$ & $\gamma$\\
+\midrule
+$S_{p+r},S_{s+r}^*;M_{p,s}$ & $p,s,r\ge0$ & $r$ & $(-1)^{hr}$\\
+$S_{s+r}^*,S_{p+r};M_{p,s}$ & $p,s,r\ge0$ & $r$ & $1$\\
+$M_{p,s},S_c;S_{p+c-s}$ & $s\le c$ & $s$ & $1$\\
+$S_a,M_{p,s};S_d$ & $a+p=s+d,\ s\le a$ & $s$ & $(-1)^{hs}$\\
+$S_a,S_b;T_{a+b,r}$ & $r\le\min(a,b)$ & $0$ & $1$\\
+$T_{c+d,r},S_c^*;S_d$ & $r\le\min(c,d)$ & $c$ & $(-1)^{hc}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+For the last two rows occurring together, also
+$r\le\min(a,b,c,d)$ and $a+b=c+d$.
+The $B=S_k$ clause includes $k=0$ and takes precedence when
+$S_0=S_0^*$. Formula~\eqref{eq:actualAMSphase}, rather than the choice
+of a row in this display, defines the phase at every coincident triple.
+Its role evaluations are proved in
+\lean{AMSDynkinVertexPhase.lean},
+\lean{AMSDynkinPhaseMixedRoles.lean}, and
+\lean{ActualTwoRowDynkin.lean}.
+
+\begin{proof}[Proof of Theorem~\ref{thm:actualAMStable}]
+We first identify the six native positive maps with entries of
+\eqref{eq:actualpositivevertex}. The forward and reverse mixed embeddings
+$C_r^+$ and $C_r^-$ have unit highest images by normalized highest
+transport. After pairing the first factor with its highest vector,
+occupation augmentation on the second factor is strictly positive. For the symmetric pair inclusion into $T_{a+b,r}$,
+projection onto the highest first factor leaves the positive leading
+normalized two-row coefficient. Their highest spaces have dimension
+one by the complete mixed and symmetric fusion decompositions.
+
+The two mixed outer maps are obtained by projecting the
+contraction-zero Type-I left tree and Type-II right tree onto
+$M_{p,s}$. Call them $G:S_{p+c-s}\to M_{p,s}\otimes S_c$ and
+$F:S_d\to S_a\otimes M_{p,s}$, respectively. Their highest norms are one. Projecting the first
+factor onto its highest line and using the established strict boundary
+signs proves positivity in \eqref{eq:actualpositivevertex}.
+For $F$ the mixed boundary is the positive coefficient of the
+contraction-zero Type-II right tree. On pure endpoint carriers, projection
+onto the first highest factor fixes a Cartan weight of the second factor.
+The projected vector lies on the single occupation line selected by
+that weight, where augmentation agrees with the specified boundary
+coefficient. The forward/reverse comparison
+\eqref{eq:globalorientationboundary} identifies the relative Type-I
+phase in \eqref{eq:globalsharedright}. Inserting the fixed mixed carrier into the actual
+triple embeds each outer highest space injectively into its known
+one-dimensional physical channel line. The nonzero unit highest
+image proves that its dimension is exactly one.
+
+For the remaining positive map
+$O:S_d\to T_{c+d,r}\otimes S_c^*$, take the normalized bent two-row
+pair projection with scalar \eqref{eq:globalIIleftscale}.
+After pairing the two-row factor with its normalized highest vector,
+the cup sum has exactly one nonzero occupation term,
+$(c-r)e_0+r e_1$. Before that scalar the boundary is
+\[
+ (-1)^r\mathcal N_v(d-r,c-r,r)^{-1/2},
+\]
+where the already proved finite CG norm is
+\[
+ \mathcal N_v(u,w,r)=v^{-2rw}
+ \frac{\qf{r}\qf{u}\qf{w}\qf{u+w+r+1}}
+ {\qf{u+r}\qf{w+r}\qf{u+w+1}}>0.
+\]
+The squared norm $\mathcal N_v(u,w,r)=H(u+r,w+r,r)$ is
+\lean{couplingNormClosed} in \lean{QuantumCouplingNormFormula.lean}. The boundary sign $(-1)^r$
+cancels the sign in \eqref{eq:globalIIleftscale}, giving a positive
+boundary. Applying $O$ and then including the two-row channel into
+$S_a\otimes S_b$ gives the calibrated left highest vector. This
+inclusion preserves the norm, so $O$ has a unit highest image. The same inclusion embeds its
+highest space into the complete one-dimensional Type-II left channel.
+This proves existence, uniqueness and positivity for the sixth role.
+These are actual full intertwiners: canonical transport, projection,
+tensor inclusion and bending all intertwine the entire presented
+quantum algebra.
+
+For completeness, isometry on the \emph{whole source} is checked
+separately. Mixed embeddings are canonical highest isometries, and
+the two-row map is isometric inclusion. Compose each outer map with
+its isometric carrier inclusion into the corresponding physical
+triple. The composite and the previously constructed full unit
+highest-tree embedding intertwine the algebra and agree on the
+highest generator. Cyclic uniqueness makes them equal on every
+vector. The full tree embedding and the carrier inclusion preserve
+the compact forms, so the outer map does too. This proves full
+isometry for all six roles, not only normalization of a highest
+vector. The concrete proofs are in
+\lean{AMSOuterVerticesFullIsometry.lean} and
+\lean{SharedActualAMSUnitary.lean}.
+
+Transport each native positive map to the chosen actual carriers.
+The common positive boundary, one-dimensional highest line and cyclic
+uniqueness identify it with the \emph{same} $P_{AB}^{C}$, whatever
+native role supplies the construction. This proves compatibility
+also at $N=3$, at zero labels and whenever an inner vertex is an
+outer vertex in a different quadruple. Multiplying by
+\eqref{eq:actualAMSphase} gives the six full-map identities in
+\lean{SharedActualAMSVertexTableSpec}; they are proved by
+\lean{amsActualVertexTable_shared}.
+
+It remains to calculate the two tree phases. In Type I the left
+mixed embedding contributes $(-1)^{hr}$, exactly the left creation
+phase in \eqref{eq:globalIsteps}, and the left outer vertex has phase
+one. The reverse inner vertex has phase one; the right outer phase
+$(-1)^{hs}$ cancels the right comparison sign in
+\eqref{eq:globalsharedright}. Both trees are therefore exactly their
+calibrated counterparts. In Type II the same-orientation inner
+vertex has phase one and $O$ has phase $(-1)^{hc}$. For the right tree
+write $c=s+r$. Its inner and outer phases multiply to
+$(-1)^{hr}(-1)^{hs}=(-1)^{hc}$. This proves the four identities
+\eqref{eq:actualAMStrees} in every native realization.
+
+Finally, changing an internal carrier inserts $J^{-1}J=\id$
+between the two vertices of either tree. The only surviving
+transport is the same external triple isometry for both trees.
+Its preservation of the compact pairing, and
+$((-1)^{hc})^2=1$, prove equality of the actual shared-table overlaps
+with the calibrated overlaps. The already certified actual pivotal
+dimensions and finite factorial evaluation then give AMS Eq.~(35)
+for both families. No factorial candidate defines a vertex or a tree.
+The four actual-tree identities, exact overlap comparison, and literal
+four-triangle evaluations are respectively
+\lean{ActualAMSQuadrilateralComparison.lean},
+\lean{ActualAMSRecoupling.lean}, and
+\lean{ActualAMSCoefficientCertificate.lean}.
+\end{proof}
+
+The combined formal entry point is
+\begin{center}
+\lean{AMSPhysical.AMS_Eq35_shared_actual_vertex_certificate}.
+\end{center}
+It fixes the concrete table before universally quantifying every
+admissible exterior and channel label. The existence theorem
+\lean{exists_shared_actual_unitary_AMS_vertex_table} also states
+explicitly that every admissible entry is an isometric full
+intertwiner. Neither theorem assumes a common table, a unitary outer
+vertex, or a phase factorization as an unproved hypothesis.
+
+\paragraph{Scope of global coherence.}
+The actual phase \eqref{eq:actualAMSphase} specializes
+Lemma~\ref{lem:globalphases}: its phase-transition product along every
+finite closed path of admissibly labelled trees is one, as proved by
+\lean{amsDynkinVertexPhase_closed_path}. Together with
+Theorem~\ref{thm:actualAMStable}, this certifies one shared actual AMS
+vertex table for both families at $N\ge3$; rank two is covered by
+Theorem~\ref{thm:globalranktwo}. The actual-table construction is proved
+for real $v>0$, $v\ne1$. The coefficient deformation limits and
+compatible complex continuations in the next section remain broader
+\emph{coefficient} statements; a separate classical or arbitrary-complex
+shared tensor category is not asserted. Likewise the closed-path
+phase theorem is not a new full pentagon matrix certificate for all
+irreducible representations.
+
+\section{The classical limit and generic complex deformation}\label{sec:continuation}
+\subsection{The physical limit at \texorpdfstring{$v=1$}{v=1}}
+The regular quantum integer is the finite Laurent polynomial
+\[
+ [k]_v=\sum_{a=0}^{k-1}v^{k-1-2a}\quad(k\ge1),
+ \qquad [0]_v=0.
+\]
+It is analytic near every positive parameter and equals $k$ at one.
+All supported factorials in \eqref{eq:AMSkernel} consequently tend to
+ordinary factorials. The squared triangle factors are positive at one,
+so their positive square-root branches are analytic there. Since the sum
+is finite, the proved positive-real physical identity gives
+\begin{equation}\label{eq:certclassical}
+ \lim_{\substack{v\to1\\v>0,\ v\ne1}}\Phi^{\rm phys}_{N,T}(v)
+       =K_N(1)I_{N,T}(1).
+\end{equation}
+In Lean the classical coefficient is defined by the limit of the actual
+physical coefficient family, using \lean{limUnder}; the right-hand side
+is then proved equal to that limit. A separate theorem identifies this
+limit with the value at one of the independent finite complex CG-tree
+continuation described next. The certified $v=1$ assertion is this physical
+deformation-limit statement. It is not a separate formalization of the
+classical $SU(N)$ representation category; the classical analytic proof
+above supplies the usual representation-theoretic context.
+
+\subsection{An independent physical complex coefficient}
+For each fixed admissible exterior quadruple construct $F_{ij}(z)$ by
+finite CG trees and the independently evaluated higher-rank dimensions.
+More explicitly, the continued rank-two overlap is
+\begin{equation}\label{eq:certcomplexCG}
+ U'_{ij}(z)=\sum_{p,q,r}
+   w_A(p;z)w_B(q;z)w_C(r;z)
+   L'_i(p,q,r;z)R'_j(p,q,r;z),
+\end{equation}
+where the sums run over the finite occupation bases, $w$ are their
+continued compact metric weights, and each tree coefficient is a finite
+CG expression. This is a complex bilinear continuation of the real
+metric overlap; no complex conjugation of the parameter is introduced.
+To match the literal Lean definitions, write
+$\mathcal R(w)=\exp(\tfrac12\operatorname{Log}w)$ for the initial
+normalization representative. It agrees with the positive square root
+on $w>0$ and is holomorphic on the slit plane; continuation subsequently
+uses the matrix patches specified below. Set
+\[
+ F_{ij}(z)=\frac{(-1)^\rho U'_{ij}(z)}{\mathcal R(d_i(z)e_j(z))}.
+\]
+Finite Laurent quantum factorials and square roots continued from their
+positive values define these functions near the entire positive real
+axis, including one. Their holomorphy there is proved from the explicit
+CG expressions. Independent physical rank reduction and dimension
+identification prove $F_{ij}(v)=\Phi^{\rm phys}_{ij}(v)$ for $v>0$,
+$v\ne1$, before evaluating the AMS sum.
+
+For the independent formula family, let $\Theta_{ij}(z)$ be the
+product of the four \emph{squared} triangle factors in \eqref{eq:KN},
+with parameter $z$. The literal formal expression is
+\begin{equation}\label{eq:complexgroupedroot}
+ G_{ij}(z)=[N-1]_z![N-2]_z!\,
+                \mathcal R(\Theta_{ij}(z))\,I_{N,T}(z).
+\end{equation}
+Thus one square root is taken after multiplying the four squared factors,
+as in \lean{complexFourTriangleRadicand} and
+\lean{complexAMSExpression}. On positive parameters this equals $K_NI_{N,T}$.
+For complex parameters it specifies the initial representative exactly;
+it must not be replaced by a product of independently chosen pointwise
+principal square roots of the four factors. For the whole finite matrix let
+\begin{equation}\label{eq:certbranch}
+ \mathcal U=\operatorname{Comp}_{2}\!\left(
+  \bigcap_{i,j}\bigl(\operatorname{Hol}(F_{ij})
+                         \cap\operatorname{Hol}(G_{ij})\bigr)\right),
+\end{equation}
+where $\operatorname{Hol}(f)$ is the open locus at which the specified
+function is holomorphic, and $\operatorname{Comp}_{2}$ denotes the connected
+component containing $z=2$. The certificate proves that $\mathcal U$ is
+open, connected and contains the entire positive real axis.
+The positive-real identity already proved gives $F_{ij}=G_{ij}$ on
+$2+2^{-n}$, which accumulates at $2\in\mathcal U$.
+The proved identity principle therefore gives
+\begin{equation}\label{eq:certcomplexidentity}
+ F_{ij}(z)=G_{ij}(z)\qquad(z\in\mathcal U,\ \text{all }i,j).
+\end{equation}
+
+\subsection{All compatible continuation branches}
+A matrix patch consists of one connected open domain and one holomorphic
+function for every matrix entry. A continuation chain starts with the physical matrix on a nonempty
+subdomain of $\mathcal U$. Each step passes to a patch with nonempty
+intersection with the previous domain, and the two matrices agree
+throughout that intersection.
+This definition concerns one base family only; it contains neither the
+AMS candidate nor an assumed physical/formula comparison.
+Replacing the initial physical family by the equal AMS family in
+\eqref{eq:certcomplexidentity} preserves the same initial patch and every
+subsequent step. Induction on the chain in both directions proves
+\begin{equation}\label{eq:certcontinuations}
+ \operatorname{Cont}_{\mathcal U}(F)=\operatorname{Cont}_{\mathcal U}(G).
+\end{equation}
+In particular, for every complex $z$ and every whole-matrix value $V$,
+$V$ is a value of the continued physical family at $z$ if and only if it
+is a value of the continued AMS expression there, using the same patch
+chains. This is the precise generic-complex coefficient theorem.
+
+This statement allows monodromy and uses compatible normalization branches.
+It does not assert that every complex point is regular or reachable, or
+that independently chosen pointwise principal square roots give the
+continued channel convention. It also does not implement an independent
+higher-rank tensor category at arbitrary complex deformation. The certified
+complex scope is analytic continuation of the actual positive-real
+physical coefficient family. Arbitrary nonsymmetric exterior modules and
+root-of-unity fusion quotients are outside the theorem.
+
+\section{Lean certificate and reproducible verification}\label{sec:audit}
+The unified theorem is
+\begin{center}
+ \lean{AMSPhysical.AMS_Eq35_complete}.
+\end{center}
+Its conclusion is the conjunction of six explicit propositions: the
+Type-I and Type-II physical identities for every positive $v\ne1$, the
+two actual physical limits at one, and equality of the two pairs of full
+compatible complex continuation families. All ranks $N=h+2\ge2$ and all
+admissible exterior and channel labels are universally quantified.
+The Lean parameter named \lean{q} is $v$ in this note, so AMS's
+half-power parameter is its square.
+
+\begin{center}
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.61\linewidth}}
+\toprule
+Mathematical step & Lean source or theorem (namespace \lean{AMSPhysical})\\
+\midrule
+Complete Type-I space and isometry &
+ \lean{QuantumCupHighestComplete.lean},
+ \lean{QuantumFullHighestRankReduction.lean}\\[3pt]
+Actual Type-I channel reduction &
+ \lean{PhysicalTypeIRankReduction.lean},
+ \lean{physicalTypeI_AMS_Eq35_four_triangles}\\[3pt]
+Type-II actual norm and scalar &
+ \lean{QuantumTypeIILeftNormClosed.lean},
+ \lean{TypeIIShiftedUniversalNormalization.lean}\\[3pt]
+Full Type-II creation transport &
+ \lean{typeIIShiftedUnitEquiv_creation}\\[3pt]
+Complete Type-II right-channel comparison &
+ \lean{TypeIIStandardShiftedRightBasis.lean},
+ \lean{typeIIShiftedUnitEquiv_right}\\[3pt]
+Exact physical Type-II formula and gauge &
+ \lean{PhysicalTypeIICalibratedGauge.lean},
+ \lean{physicalTypeII_AMS_Eq35_calibrated}\\[3pt]
+Actual classical limits &
+ \lean{AMSClassicalPhysicalValue.lean},
+ \lean{ComplexPhysicalClassicalLimit.lean}\\[3pt]
+Whole-matrix complex branches &
+ \lean{ComplexAMSMatrixBranch.lean},
+ \lean{PhysicalAMSGenericComplex.lean}\\[3pt]
+Unified coefficient theorem & \lean{AMS35Certificate.lean}\\[3pt]
+Actual carriers, common positive boundary &
+ \lean{ActualHighestCarrier.lean}, \lean{ActualAMSBoundary.lean}\\[3pt]
+Six actual full isometric vertex roles &
+ \lean{SharedActualAMSVertexTable.lean}, \lean{SharedActualAMSUnitary.lean}\\[3pt]
+Actual shared-table trees and coefficients &
+ \lean{ActualAMSRecoupling.lean}, \lean{ActualAMSCoefficientCertificate.lean}\\[3pt]
+Combined shared-table theorem & \lean{AMSSharedVertexCertificate.lean}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Full workstation replay, 25 November 2026, 02:14 CET.}
+All 985 source modules were rebuilt on
+\lean{jmartinpc} with 24 parallel jobs and warnings treated as errors:
+3,346 theorems and 1,136 supporting declarations.
+The complete transitive dependency audit covered all 4,482
+declaration roots and found exactly the standard Lean axioms
+\lean{propext}, \lean{Classical.choice}, and \lean{Quot.sound}.
+There are no \lean{sorry}/\lean{admit} placeholders, custom axioms,
+unsafe declarations, assumed AMS identities, or unproved physical
+comparison, common-table or unitary-vertex hypotheses in these statements.
+The replay includes the concrete shared actual vertex table, all six
+full-map roles, all four tree comparisons and both exact coefficient
+evaluations in Theorem~\ref{thm:actualAMStable}.
+The verifier automatically gives the combined audit a 64 MiB thread
+stack; this resource setting adds no mathematical assumption.
+Lean is pinned to 4.24.0, commit
+\lean{797c613eb9b6d4ec95db23e3e00af9ac6657f24b}, with Mathlib v4.24.0.
+
+The Lean archive \lean{AMS_Eq35_Lean_coefficients_and_shared_vertices.zip} has SHA-256
+\begin{quote}\small
+\nolinkurl{61ab62f2133e063fe7b8fdca722501621d18c5037e8e5716ef127afffab0fd04}.
+\end{quote}
+The archive contains every source, the pinned toolchain files, the
+verifier and the successful audit evidence. In its \lean{AMSPhysical}
+directory, replay with
+\begin{quote}\small\ttfamily
+python3 verify.py --jobs 24 --lean /path/to/lean \textbackslash\\
+\hspace*{8mm}--mathlib /path/to/mathlib
+\end{quote}
+The report \lean{verification/report.json} records the host, toolchain,
+all source hashes, required main theorem names, exact declaration counts
+and axiom union. The complete logs are
+\lean{verification/replay.log} and \lean{verification/Audit.log}.
+The verifier requires the combined shared-table theorem, both
+shared-table coefficient identities, and the isometry theorem for every
+admissible vertex. The scope of the shared table is given in
+Section~\ref{sec:globalvertices}.
+\end{revision}
+
+
+\section*{Acknowledgements}
+The question addressed here arose during collaborative work with
+Eduardo Serrano-Ens\'astiga, Jonathan Louvet, and Thierry Bastin on
+\emph{Partial transpose as a Racah transformation and applications to
+symmetric multiqudit systems}.
+
+\begin{revision}
+\section*{AI-use declaration}
+This work is declared \emph{AI-derived}. John Martin posed the question
+and directed the work. GPT-6.1 Sol derived the proof and wrote the
+manuscript. GPT-6.2 Sol was used to review the
+manuscript. The formal results were checked with Lean~4.24.0 and
+Mathlib~v4.24.0, as described in Section~\ref{sec:audit}.
+\end{revision}
+
+\begin{thebibliography}{9}
+\bibitem{AMS} V.~Alekseev, A.~Morozov, and A.~Sleptsov,
+Multiplicity-free $U_q(\mathfrak{sl}_N)$ $6$-$j$ symbols: Relations,
+asymptotics, symmetries, Nucl. Phys. B \textbf{960}, 115164 (2020),
+\href{https://arxiv.org/abs/1912.13325}{arXiv:1912.13325},
+\href{https://doi.org/10.1016/j.nuclphysb.2020.115164}{doi:10.1016/j.nuclphysb.2020.115164}.
+\bibitem{NRZ} S.~Nawata, P.~Ramadevi, and Zodinmawia,
+Multiplicity-free quantum $6j$-symbols for $U_q(\mathfrak{sl}_N)$,
+Lett. Math. Phys. \textbf{103}, 1389--1398 (2013),
+\href{https://arxiv.org/abs/1302.5143}{arXiv:1302.5143},
+\href{https://doi.org/10.1007/s11005-013-0651-4}{doi:10.1007/s11005-013-0651-4}.
+\bibitem{NT} S.~Neshveyev and L.~Tuset,
+Notes on the Kazhdan--Lusztig theorem on equivalence of the Drinfeld
+category and the category of $U_q\mathfrak g$-modules,
+Algebr. Represent. Theory \textbf{14}, 897--948 (2011),
+\href{https://arxiv.org/abs/0711.4302}{arXiv:0711.4302},
+\href{https://doi.org/10.1007/s10468-010-9223-9}{doi:10.1007/s10468-010-9223-9}.
+\bibitem{FH} W.~Fulton and J.~Harris, \emph{Representation Theory:
+A First Course}, Graduate Texts in Mathematics 129, Springer (1991),
+Sec.~6.1, Eq.~(6.8) (Pieri formula),
+\href{https://doi.org/10.1007/978-1-4612-0979-9}{doi:10.1007/978-1-4612-0979-9}.
+\bibitem{KR} A.~N.~Kirillov and N.~Yu.~Reshetikhin,
+Representations of the algebra $U_q(\mathfrak{sl}(2))$, $q$-orthogonal
+polynomials and invariants of links, in \emph{New Developments in the
+Theory of Knots}, ed.~T.~Kohno, World Scientific (1990), pp.~202--256,
+\href{https://doi.org/10.1142/9789812798329_0012}{\nolinkurl{doi:10.1142/9789812798329_0012}}.
+\end{thebibliography}
+\end{document}
