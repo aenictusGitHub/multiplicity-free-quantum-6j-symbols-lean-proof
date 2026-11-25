@@ -8,6 +8,10 @@ The formula is Eq. (35) of V. Alekseev, A. Morozov and A. Sleptsov, *Multiplicit
 
 At $N\geq 3$ and real $v>0$, $v\neq 1$, the proof constructs one shared table of isometric intertwiners for both families. The classical and complex results concern the coefficient limits and compatible analytic continuations described in the manuscript.
 
+## Acknowledgements
+
+The question addressed here arose during collaborative work with Eduardo Serrano-Ensástiga, Jonathan Louvet, and Thierry Bastin on *Partial transpose as a Racah transformation and applications to symmetric multiqudit systems*.
+
 ## Downloads
 
 The [v1.0.1 release](https://github.com/aenictusGitHub/multiplicity-free-quantum-6j-symbols-lean-proof/releases/tag/v1.0.1) contains the manuscript PDF, the self-contained LaTeX source ZIP, the audited Lean certificate ZIP, and SHA-256 checksums. The [manuscript source](manuscript/AMS_Eq35_representation_theoretic_proof.tex) and [Lean project](lean/AMSPhysical) are also browsable here.
