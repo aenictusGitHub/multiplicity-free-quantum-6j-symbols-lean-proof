@@ -4,13 +4,13 @@ John Martin · 25 November 2026
 
 This repository contains the manuscript *A representation-theoretic proof of the AMS relation* and its Lean certificate. It proves that the Alekseev–Morozov–Sleptsov factorial formula gives the actual quantum $6j$ coefficients of $U_q(\mathfrak{sl}_N)$ for both multiplicity-free symmetric families.
 
-The formula is Eq. (35) of V. Alekseev, A. Morozov and A. Sleptsov, *Multiplicity-free $U_q(\mathfrak{sl}_N)$ 6-j symbols: Relations, asymptotics, symmetries*, *Nuclear Physics B* **960**, 115164 (2020). [DOI](https://doi.org/10.1016/j.nuclphysb.2020.115164) · [arXiv:1912.13325](https://arxiv.org/abs/1912.13325)
+The formula is Eq. (35) of V. Alekseev, A. Morozov and A. Sleptsov, *Multiplicity-free* $U_q(\mathfrak{sl}_N)$ *6-j symbols: Relations, asymptotics, symmetries*, *Nuclear Physics B* **960**, 115164 (2020). [DOI](https://doi.org/10.1016/j.nuclphysb.2020.115164) · [arXiv:1912.13325](https://arxiv.org/abs/1912.13325)
 
 At $N\geq 3$ and real $v>0$, $v\neq 1$, the proof constructs one shared table of isometric intertwiners for both families. The classical and complex results concern the coefficient limits and compatible analytic continuations described in the manuscript.
 
 ## Acknowledgements
 
-The question addressed here arose during collaborative work with Eduardo Serrano-Ensástiga, Jonathan Louvet, and Thierry Bastin.
+The problem studied in this work originated from collaborative research with Eduardo Serrano-Ensástiga, Jonathan Louvet, and Thierry Bastin.
 
 ## Downloads
 
