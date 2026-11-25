@@ -1,12 +1,16 @@
-# A representation-theoretic proof of the AMS relation
+# Lean proof of the multiplicity-free quantum 6j formula
 
 John Martin · 25 November 2026
 
-This manuscript proves that the factorial formula in Eq. (35) of [Alekseev, Morozov, and Sleptsov](https://doi.org/10.1016/j.nuclphysb.2020.115164) gives the quantum \(6j\) coefficients for both multiplicity-free symmetric families. At \(N\geq 3\) and real \(v>0\), \(v\neq 1\), it constructs one shared table of isometric intertwiners for both families. The classical and complex results concern the coefficient limits and compatible analytic continuations described in the manuscript.
+This repository contains the manuscript *A representation-theoretic proof of the AMS relation* and its Lean certificate. It proves that the Alekseev–Morozov–Sleptsov factorial formula gives the actual quantum $6j$ coefficients of $U_q(\mathfrak{sl}_N)$ for both multiplicity-free symmetric families.
+
+The formula is Eq. (35) of V. Alekseev, A. Morozov and A. Sleptsov, *Multiplicity-free $U_q(\mathfrak{sl}_N)$ 6-j symbols: Relations, asymptotics, symmetries*, *Nuclear Physics B* **960**, 115164 (2020). [DOI](https://doi.org/10.1016/j.nuclphysb.2020.115164) · [arXiv:1912.13325](https://arxiv.org/abs/1912.13325)
+
+At $N\geq 3$ and real $v>0$, $v\neq 1$, the proof constructs one shared table of isometric intertwiners for both families. The classical and complex results concern the coefficient limits and compatible analytic continuations described in the manuscript.
 
 ## Downloads
 
-The [v1.0.0 release](https://github.com/aenictusGitHub/ams-eq35-proof/releases/tag/v1.0.0) contains the manuscript PDF, the self-contained LaTeX source ZIP, the audited Lean certificate ZIP, and SHA-256 checksums. The [manuscript source](manuscript/AMS_Eq35_representation_theoretic_proof.tex) and [Lean project](lean/AMSPhysical) are also browsable here.
+The [v1.0.1 release](https://github.com/aenictusGitHub/multiplicity-free-quantum-6j-symbols-lean-proof/releases/tag/v1.0.1) contains the manuscript PDF, the self-contained LaTeX source ZIP, the audited Lean certificate ZIP, and SHA-256 checksums. The [manuscript source](manuscript/AMS_Eq35_representation_theoretic_proof.tex) and [Lean project](lean/AMSPhysical) are also browsable here.
 
 ## Lean verification
 
